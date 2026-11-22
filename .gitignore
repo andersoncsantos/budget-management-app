@@ -1,0 +1,11 @@
+# VSCode
+.vscode/
+
+# IntelliJ
+.idea/
+
+# AI tools
+.claude/
+.rtk/
+
+
