@@ -1,6 +1,6 @@
-import { useMemo, useState, useCallback, useEffect } from 'react';
+import { useMemo, useState, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import type { BudgetData, BudgetMetadata, BudgetEntry, Month } from '../budgetData';
+import type { BudgetData, BudgetMetadata, Month } from '../budgetData';
 import { LocalStorageAdapter } from '../services/LocalStorageAdapter';
 import type { ImportReport, ImportErrorDetail, Transaction } from '../services/IBudgetService';
 import { BudgetContext, type BudgetContextValue, type BudgetEntryInput } from './budgetContextValue';
@@ -17,9 +17,18 @@ import {
 import { getMonthFromDate } from '../services/apiHelpers';
 import { apiClient } from '../services/ApiClient';
 import type { TransactionResponse, TransactionRequest } from '../types/api';
+import {
+  ALL_MONTHS,
+  calculateBudgetMatrixFromTransactions,
+  calculateCategoryDistribution,
+  calculateMonthlySummary,
+  reconcileBudgetData,
+} from '../features/budgets';
 
 // Local storage adapter for offline mode
 const localStorageService = new LocalStorageAdapter();
+
+const MONTHS: Month[] = [...ALL_MONTHS];
 
 // Convert API transaction response to frontend transaction format
 function convertApiTransaction(apiTx: TransactionResponse): Transaction {
@@ -38,12 +47,7 @@ function convertApiTransaction(apiTx: TransactionResponse): Transaction {
 export const BudgetProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const queryClient = useQueryClient();
   const { user, isAuthenticated } = useAuth();
-  const [useApi, setUseApi] = useState(() => !!isAuthenticated && !!user);
-
-  // Update useApi when auth state changes
-  useEffect(() => {
-    setUseApi(!!isAuthenticated && !!user);
-  }, [isAuthenticated, user]);
+  const useApi = !!isAuthenticated && !!user;
 
   // Local storage state (for offline mode)
   const [localData, setLocalData] = useState<BudgetData>(localStorageService.getBudgetData());
@@ -71,10 +75,7 @@ export const BudgetProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     [apiTransactionsResponse]
   );
 
-  const months: Month[] = [
-    'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun',
-    'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez',
-  ];
+  const months = MONTHS;
 
   const refreshState = useCallback(() => {
     if (useApi) {
@@ -211,9 +212,10 @@ export const BudgetProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             .map(e => ({ line: e.line ?? undefined, message: e.message }));
 
           for (let i = 0; i < ts.length; i++) {
-            if (failedLines.has(i + 2)) {
+            const row = ts[i];
+            if (row && failedLines.has(i + 2)) {
               try {
-                await apiClient.createTransaction(makeBody(ts[i], i));
+                await apiClient.createTransaction(makeBody(row, i));
                 imported++;
               } catch (e) {
                 const message = e instanceof Error ? e.message : 'Unknown error';
@@ -247,8 +249,10 @@ export const BudgetProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       let skipped = 0;
       const errors: ImportErrorDetail[] = [];
       for (let i = 0; i < ts.length; i++) {
+        const row = ts[i];
+        if (!row) continue;
         try {
-          await apiClient.createTransaction(makeBody(ts[i], i));
+          await apiClient.createTransaction(makeBody(row, i));
           imported++;
         } catch (e) {
           const message = e instanceof Error ? e.message : 'Unknown error';
@@ -334,85 +338,37 @@ export const BudgetProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     [useApi, user, apiTransactions, updateTransactionMutation, refreshState, queryClient]
   );
 
-  // Calculate totals for the current data source
+  const transactions = useApi ? apiTransactions : localTransactions;
+
+  // Calculate data from API transactions when in API mode using integer minor-unit domain functions
+  const calculatedData: BudgetData = useMemo(() => {
+    if (useApi) {
+      const resolvedMetadata: BudgetMetadata = {
+        ...localData.metadata,
+        ...(apiMetadata ? {
+          realBalance: apiMetadata.realBalance,
+          updatedDate: apiMetadata.updatedDate || localData.metadata.updatedDate,
+        } : {}),
+      };
+
+      return calculateBudgetMatrixFromTransactions(apiTransactions, resolvedMetadata);
+    }
+    return reconcileBudgetData(localData);
+  }, [useApi, apiTransactions, localData, apiMetadata]);
+
+  // Calculate totals for the current data source from the single reconciled matrix
   const calculateTotalForMonth = useCallback(
-    (month: Month) => {
-      if (useApi) {
-        // Calculate from API transactions
-        const monthTransactions = apiTransactions.filter((t) => {
-          return t.mes === month;
-        });
-
-        const income = monthTransactions
-          .filter((t) => t.valor > 0)
-          .reduce((acc, t) => acc + t.valor, 0);
-        const expenses = monthTransactions
-          .filter((t) => t.valor < 0)
-          .reduce((acc, t) => acc + Math.abs(t.valor), 0);
-        const balance = income - expenses;
-
-        return { income, expenses, balance };
-      } else {
-        const income = Object.values(localData.income).reduce(
-          (acc, entry) => acc + entry.monthlyValues[month],
-          0
-        );
-        // Exclude "Gastos Total" to prevent double-counting (same logic as AnalyticsSection)
-        const expenses = Object.entries(localData.expenses)
-          .filter(([name]) => name !== 'Gastos Total' && !name.toLowerCase().includes('total'))
-          .reduce((acc, [, entry]) => acc + entry.monthlyValues[month], 0);
-        const balance = localData.balance.monthlyValues[month];
-
-        return { income, expenses, balance };
-      }
-    },
-    [useApi, apiTransactions, localData]
+    (month: Month) => calculateMonthlySummary(calculatedData, month),
+    [calculatedData]
   );
 
-  const getCategoryDistribution = useCallback(() => {
-    if (useApi) {
-      // Calculate from API transactions
-      const expensesByCategory: Record<string, number> = {};
-
-      apiTransactions
-        .filter((t) => t.valor < 0)
-        .forEach((t) => {
-          expensesByCategory[t.categoria] = (expensesByCategory[t.categoria] || 0) + Math.abs(t.valor);
-        });
-
-      const totalExpenses = Object.values(expensesByCategory).reduce((acc, v) => acc + v, 0);
-
-      if (totalExpenses === 0) {
-        return [];
-      }
-
-      return Object.entries(expensesByCategory)
-        .filter(([, value]) => value > 0)
-        .map(([name, value]) => ({
-          name,
-          value,
-          percentage: totalExpenses > 0 ? (value / totalExpenses) * 100 : 0,
-        }))
-        .sort((a, b) => b.value - a.value);
-    } else {
-      const totalExpenses = Math.abs(localData.expenses['Gastos Total']?.total || 0);
-      if (totalExpenses === 0) {
-        return [];
-      }
-      return Object.entries(localData.expenses)
-        .filter(([name, entry]) => name !== 'Gastos Total' && Math.abs(entry.total) > 0)
-        .map(([name, entry]) => ({
-          name,
-          value: Math.abs(entry.total),
-          percentage: totalExpenses > 0 ? (Math.abs(entry.total) / totalExpenses) * 100 : 0,
-        }))
-        .sort((a, b) => b.value - a.value);
-    }
-  }, [useApi, apiTransactions, localData]);
+  const getCategoryDistribution = useCallback(
+    () => calculateCategoryDistribution(calculatedData),
+    [calculatedData]
+  );
 
   const getCategories = useCallback(() => {
     if (useApi) {
-      // Get unique categories from API transactions
       const categories = new Set<string>();
       apiTransactions.forEach((t) => categories.add(t.categoria));
       return Array.from(categories).sort();
@@ -424,97 +380,6 @@ export const BudgetProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       return Array.from(new Set([...incomeCategories, ...expenseCategories])).sort();
     }
   }, [useApi, apiTransactions, localData]);
-
-  const transactions = useApi ? apiTransactions : localTransactions;
-
-  // Calculate data from API transactions when in API mode
-  const calculatedData: BudgetData = useMemo(() => {
-    if (useApi) {
-      // Calculate income, expenses, and balance from API transactions
-      const income: Record<string, BudgetEntry> = {};
-      const expenses: Record<string, BudgetEntry> = {};
-      const balance: BudgetEntry = {
-        monthlyValues: {
-          Jan: 0, Fev: 0, Mar: 0, Abr: 0, Mai: 0, Jun: 0,
-          Jul: 0, Ago: 0, Set: 0, Out: 0, Nov: 0, Dez: 0
-        },
-        total: 0
-      };
-
-      // Group transactions by category and month
-      months.forEach(month => {
-        const monthTxs = apiTransactions.filter(t => t.mes === month);
-        
-        // Calculate income by category
-        monthTxs.filter(t => t.valor > 0).forEach(t => {
-          if (!income[t.categoria]) {
-            income[t.categoria] = {
-              monthlyValues: { Jan: 0, Fev: 0, Mar: 0, Abr: 0, Mai: 0, Jun: 0, Jul: 0, Ago: 0, Set: 0, Out: 0, Nov: 0, Dez: 0 },
-              total: 0
-            };
-          }
-          income[t.categoria].monthlyValues[month] += t.valor;
-        });
-
-        // Calculate expenses by category
-        monthTxs.filter(t => t.valor < 0).forEach(t => {
-          if (!expenses[t.categoria]) {
-            expenses[t.categoria] = {
-              monthlyValues: { Jan: 0, Fev: 0, Mar: 0, Abr: 0, Mai: 0, Jun: 0, Jul: 0, Ago: 0, Set: 0, Out: 0, Nov: 0, Dez: 0 },
-              total: 0
-            };
-          }
-          expenses[t.categoria].monthlyValues[month] += t.valor;
-        });
-      });
-
-      // Calculate totals for each income category
-      Object.values(income).forEach(entry => {
-        entry.total = months.reduce((acc, m) => acc + entry.monthlyValues[m], 0);
-      });
-
-      // Calculate totals for each expense category
-      Object.values(expenses).forEach(entry => {
-        entry.total = months.reduce((acc, m) => acc + entry.monthlyValues[m], 0);
-      });
-
-      // Calculate Gastos Total
-      const gastosTotal: BudgetEntry = {
-        monthlyValues: { Jan: 0, Fev: 0, Mar: 0, Abr: 0, Mai: 0, Jun: 0, Jul: 0, Ago: 0, Set: 0, Out: 0, Nov: 0, Dez: 0 },
-        total: 0
-      };
-      months.forEach(month => {
-        const monthExpenses = Object.values(expenses).reduce((acc, entry) => acc + entry.monthlyValues[month], 0);
-        gastosTotal.monthlyValues[month] = monthExpenses;
-      });
-      gastosTotal.total = months.reduce((acc, m) => acc + gastosTotal.monthlyValues[m], 0);
-      expenses['Gastos Total'] = gastosTotal;
-
-      // Calculate balance per month
-      months.forEach(month => {
-        const incomeTotal = Object.values(income).reduce((acc, entry) => acc + entry.monthlyValues[month], 0);
-        const expensesTotal = gastosTotal.monthlyValues[month];
-        balance.monthlyValues[month] = incomeTotal + expensesTotal;
-      });
-      balance.total = months.reduce((acc, m) => acc + balance.monthlyValues[m], 0);
-
-      const resolvedMetadata: BudgetMetadata = {
-        ...localData.metadata,
-        ...(apiMetadata ? {
-          realBalance: apiMetadata.realBalance,
-          updatedDate: apiMetadata.updatedDate || localData.metadata.updatedDate,
-        } : {}),
-      };
-
-      return {
-        metadata: resolvedMetadata,
-        income,
-        expenses,
-        balance
-      };
-    }
-    return localData;
-  }, [useApi, apiTransactions, localData, months, apiMetadata]);
 
   const value = useMemo<BudgetContextValue>(
     () => ({

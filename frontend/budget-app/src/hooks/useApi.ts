@@ -208,6 +208,3 @@ export function useFinancialSummary(userId: string | undefined) {
     enabled: !!userId,
   });
 }
-
-// Re-export useApiBudgetService from the correct location
-export { useApiBudgetService } from '../services/ApiBudgetService';

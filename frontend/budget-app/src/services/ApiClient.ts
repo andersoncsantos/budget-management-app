@@ -14,6 +14,15 @@ import type {
   MetadataResponse,
   MetadataUpdateRequest,
 } from '../types/api';
+import {
+  parseAuthResponse,
+  parseCategoryResponse,
+  parseCategoryResponseList,
+  parseMetadataResponse,
+  parseTransactionBatchResponse,
+  parseTransactionResponse,
+  parseTransactionResponseList,
+} from '../shared/lib/validators';
 
 // Use relative path for proxy, full URL for production
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
@@ -70,17 +79,19 @@ class ApiClient {
 
   // Auth endpoints
   async login(data: LoginRequest): Promise<AuthResponse> {
-    return this.request<AuthResponse>('/auth/login', {
+    const raw = await this.request<unknown>('/auth/login', {
       method: 'POST',
       body: JSON.stringify(data),
     });
+    return parseAuthResponse(raw);
   }
 
   async register(data: RegisterRequest): Promise<AuthResponse> {
-    return this.request<AuthResponse>('/auth/register', {
+    const raw = await this.request<unknown>('/auth/register', {
       method: 'POST',
       body: JSON.stringify(data),
     });
+    return parseAuthResponse(raw);
   }
 
   // Budget endpoints
@@ -114,14 +125,16 @@ class ApiClient {
 
   // Category endpoints
   async getCategories(userId: string): Promise<CategoryResponse[]> {
-    return this.request<CategoryResponse[]>(`/categories?userId=${userId}`);
+    const raw = await this.request<unknown>(`/categories?userId=${userId}`);
+    return parseCategoryResponseList(raw);
   }
 
   async createCategory(data: CategoryRequest): Promise<CategoryResponse> {
-    return this.request<CategoryResponse>('/categories', {
+    const raw = await this.request<unknown>('/categories', {
       method: 'POST',
       body: JSON.stringify(data),
     });
+    return parseCategoryResponse(raw);
   }
 
   // Transaction endpoints
@@ -138,28 +151,32 @@ class ApiClient {
     if (filters?.endDate) params.append('endDate', filters.endDate);
     if (filters?.category) params.append('category', filters.category);
 
-    return this.request<TransactionResponse[]>(`/transactions?${params}`);
+    const raw = await this.request<unknown>(`/transactions?${params}`);
+    return parseTransactionResponseList(raw);
   }
 
   async getTransaction(id: string): Promise<TransactionResponse> {
-    return this.request<TransactionResponse>(`/transactions/${id}`);
+    const raw = await this.request<unknown>(`/transactions/${id}`);
+    return parseTransactionResponse(raw);
   }
 
   async createTransaction(data: TransactionRequest): Promise<TransactionResponse> {
-    return this.request<TransactionResponse>('/transactions', {
+    const raw = await this.request<unknown>('/transactions', {
       method: 'POST',
       body: JSON.stringify(data),
     });
+    return parseTransactionResponse(raw);
   }
 
   async updateTransaction(
     id: string,
     data: TransactionRequest
   ): Promise<TransactionResponse> {
-    return this.request<TransactionResponse>(`/transactions/${id}`, {
+    const raw = await this.request<unknown>(`/transactions/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data),
     });
+    return parseTransactionResponse(raw);
   }
 
   async deleteTransaction(id: string): Promise<void> {
@@ -170,10 +187,11 @@ class ApiClient {
 
   // Batch import endpoint
   async batchImportTransactions(data: TransactionBatchRequest): Promise<TransactionBatchResponse> {
-    return this.request<TransactionBatchResponse>('/transactions/batch', {
+    const raw = await this.request<unknown>('/transactions/batch', {
       method: 'POST',
       body: JSON.stringify(data),
     });
+    return parseTransactionBatchResponse(raw);
   }
 
   // Report endpoints
@@ -183,14 +201,16 @@ class ApiClient {
 
   // Metadata endpoints
   async getUserMetadata(userId: string): Promise<MetadataResponse> {
-    return this.request<MetadataResponse>(`/users/${userId}/metadata`);
+    const raw = await this.request<unknown>(`/users/${userId}/metadata`);
+    return parseMetadataResponse(raw);
   }
 
   async updateUserMetadata(userId: string, data: MetadataUpdateRequest): Promise<MetadataResponse> {
-    return this.request<MetadataResponse>(`/users/${userId}/metadata`, {
+    const raw = await this.request<unknown>(`/users/${userId}/metadata`, {
       method: 'PATCH',
       body: JSON.stringify(data),
     });
+    return parseMetadataResponse(raw);
   }
 }
 

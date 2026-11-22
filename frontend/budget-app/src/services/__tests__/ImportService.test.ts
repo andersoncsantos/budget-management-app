@@ -129,11 +129,11 @@ describe('ImportService.parseCSV encoding', () => {
 
     expect(result.errorCount).toBe(0);
     expect(transactions).toHaveLength(2);
-    expect(transactions[0].category).toBe('Farmácia');
-    expect(transactions[0].description).toBe('PIX QRS RD SAÚDE');
-    expect(transactions[0].banco).toBe('Itaú');
-    expect(transactions[1].category).toBe('Alimentação');
-    expect(transactions[1].description).toBe('Café e Pão');
+    expect(transactions[0]?.category).toBe('Farmácia');
+    expect(transactions[0]?.description).toBe('PIX QRS RD SAÚDE');
+    expect(transactions[0]?.banco).toBe('Itaú');
+    expect(transactions[1]?.category).toBe('Alimentação');
+    expect(transactions[1]?.description).toBe('Café e Pão');
   });
 
   it('parses UTF-8 with BOM encoded CSV with accented characters', async () => {
@@ -144,9 +144,9 @@ describe('ImportService.parseCSV encoding', () => {
 
     expect(result.errorCount).toBe(0);
     expect(transactions).toHaveLength(1);
-    expect(transactions[0].date).toBe('2026-09-25');
-    expect(transactions[0].category).toBe('Farmácia');
-    expect(transactions[0].description).toBe('Remédio');
+    expect(transactions[0]?.date).toBe('2026-09-25');
+    expect(transactions[0]?.category).toBe('Farmácia');
+    expect(transactions[0]?.description).toBe('Remédio');
   });
 
   it('parses Windows-1252 / ISO-8859-1 encoded CSV with accented characters without replacement character', async () => {
@@ -162,11 +162,11 @@ describe('ImportService.parseCSV encoding', () => {
 
     expect(result.errorCount).toBe(0);
     expect(transactions).toHaveLength(2);
-    expect(transactions[0].category).toBe('Farmácia');
-    expect(transactions[0].description).toBe('PIX QRS RD SAÚDE25/09');
-    expect(transactions[0].banco).toBe('Itaú');
-    expect(transactions[1].category).toBe('Alimentação');
-    expect(transactions[1].description).toBe('Refeição');
+    expect(transactions[0]?.category).toBe('Farmácia');
+    expect(transactions[0]?.description).toBe('PIX QRS RD SAÚDE25/09');
+    expect(transactions[0]?.banco).toBe('Itaú');
+    expect(transactions[1]?.category).toBe('Alimentação');
+    expect(transactions[1]?.description).toBe('Refeição');
   });
 });
 

@@ -159,13 +159,19 @@ export const Combobox = ({
       case 'Enter':
         e.preventDefault();
         if (highlightedIndex >= 0 && highlightedIndex < filteredOptions.length) {
-          handleSelect(filteredOptions[highlightedIndex]);
+          const selected = filteredOptions[highlightedIndex];
+          if (selected !== undefined) {
+            handleSelect(selected);
+          }
         } else if (highlightedIndex === filteredOptions.length && showCreateOption) {
           handleCreateNew();
         } else if (showCreateOption) {
           handleCreateNew();
         } else if (filteredOptions.length > 0) {
-          handleSelect(filteredOptions[0]);
+          const firstOption = filteredOptions[0];
+          if (firstOption !== undefined) {
+            handleSelect(firstOption);
+          }
         }
         break;
       case 'Tab':

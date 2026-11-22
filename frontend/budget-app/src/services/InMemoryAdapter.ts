@@ -1,6 +1,7 @@
 import type { Month, BudgetData, BudgetMetadata, BudgetEntry } from '../budgetData';
 import { budgetData } from '../budgetData';
 import type { IBudgetService, Transaction, ImportReport } from './IBudgetService';
+import { majorToMinor, minorToMajor } from '../shared/lib/money';
 
 const MONTHS: Month[] = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
 
@@ -24,40 +25,47 @@ export class InMemoryAdapter implements IBudgetService {
 
     for (const m of affectedMonths) {
       // Step 1: For each expense category (excluding "Gastos Total"),
-      // sum all Transaction.valor where mes === m && categoria === cat; store as negative value
+      // sum all Transaction.valor where mes === m && categoria === cat in integer minor units; store as negative value
       for (const cat of Object.keys(expenses)) {
         if (cat === 'Gastos Total') continue;
+        const expenseEntry = expenses[cat];
+        if (!expenseEntry) continue;
 
-        const sum = transactions
+        const sumMinor = transactions
           .filter(t => t.mes === m && t.categoria === cat)
-          .reduce((acc, t) => acc + t.valor, 0);
+          .reduce((acc, t) => acc + majorToMinor(t.valor), 0);
 
-        expenses[cat].monthlyValues[m] = sum === 0 ? 0 : -sum;
-        modifiedEntries.add(expenses[cat]);
+        expenseEntry.monthlyValues[m] = sumMinor === 0 ? 0 : minorToMajor(-sumMinor);
+        modifiedEntries.add(expenseEntry);
       }
 
-      // Step 2: Recalculate "Gastos Total" for m as sum of all category values for m
-      const gastosTotal = Object.entries(expenses)
+      // Step 2: Recalculate "Gastos Total" for m as sum of all category values for m in integer minor units
+      const gastosTotalMinor = Object.entries(expenses)
         .filter(([cat]) => cat !== 'Gastos Total')
-        .reduce((acc, [, entry]) => acc + entry.monthlyValues[m], 0);
+        .reduce((acc, [, entry]) => acc + majorToMinor(entry.monthlyValues[m]), 0);
+      const gastosTotal = minorToMajor(gastosTotalMinor);
 
-      expenses['Gastos Total'].monthlyValues[m] = gastosTotal;
-      modifiedEntries.add(expenses['Gastos Total']);
+      const gastosTotalEntry = expenses['Gastos Total'];
+      if (gastosTotalEntry) {
+        gastosTotalEntry.monthlyValues[m] = gastosTotal;
+        modifiedEntries.add(gastosTotalEntry);
+      }
 
       // Step 3: Recalculate balance.monthlyValues[m] = income total for m + expenses["Gastos Total"].monthlyValues[m]
-      const incomeTotal = Object.values(income).reduce(
-        (acc, entry) => acc + entry.monthlyValues[m],
+      const incomeTotalMinor = Object.values(income).reduce(
+        (acc, entry) => acc + majorToMinor(entry.monthlyValues[m]),
         0
       );
 
-      balance.monthlyValues[m] = incomeTotal + expenses['Gastos Total'].monthlyValues[m];
+      balance.monthlyValues[m] = minorToMajor(incomeTotalMinor + gastosTotalMinor);
       modifiedEntries.add(balance);
     }
 
     // Step 4: After all months, recalculate entry.total for every modified entry
-    // as sum of 12 monthly values
+    // as sum of 12 monthly values in integer minor units
     for (const entry of modifiedEntries) {
-      entry.total = MONTHS.reduce((acc, mo) => acc + entry.monthlyValues[mo], 0);
+      const totalMinor = MONTHS.reduce((acc, mo) => acc + majorToMinor(entry.monthlyValues[mo]), 0);
+      entry.total = minorToMajor(totalMinor);
     }
   }
 
@@ -117,11 +125,11 @@ export class InMemoryAdapter implements IBudgetService {
 
   updateTransaction(id: string, patch: Partial<Omit<Transaction, 'id'>>): Transaction {
     const index = this.state.transactions.findIndex(t => t.id === id);
-    if (index === -1) {
+    const existing = index !== -1 ? this.state.transactions[index] : undefined;
+    if (index === -1 || !existing) {
       throw new Error(`Transaction with id "${id}" not found`);
     }
 
-    const existing = this.state.transactions[index];
     const updated: Transaction = { ...existing, ...patch };
     this.state.transactions[index] = updated;
 
@@ -142,7 +150,9 @@ export class InMemoryAdapter implements IBudgetService {
     }
 
     const [removed] = this.state.transactions.splice(index, 1);
-    this.recalculate([removed.mes]);
+    if (removed) {
+      this.recalculate([removed.mes]);
+    }
   }
 
   updateMetadata(m: Partial<BudgetMetadata>): BudgetMetadata {

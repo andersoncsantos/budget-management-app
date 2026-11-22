@@ -20,7 +20,7 @@ interface FormData {
   type: TransactionType;
 }
 
-const todayISO = (): string => new Date().toISOString().split('T')[0];
+const todayISO = (): string => new Date().toISOString().split('T')[0] ?? '';
 
 const emptyForm = (): FormData => ({
   category: '',

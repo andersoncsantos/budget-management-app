@@ -1,6 +1,9 @@
 import type { Month, BudgetData, BudgetMetadata, BudgetEntry } from '../budgetData';
 import { budgetData } from '../budgetData';
 import type { IBudgetService, ImportReport, Transaction } from './IBudgetService';
+import { majorToMinor, minorToMajor } from '../shared/lib/money';
+import { validateStoredBudgetPayload } from '../shared/lib/validators';
+import { reconcileBudgetData } from '../features/budgets';
 
 const STORAGE_KEY = 'budget-app-data';
 
@@ -19,15 +22,18 @@ export class LocalStorageAdapter implements IBudgetService {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) throw new Error('empty');
-      const parsed = JSON.parse(raw);
-      if (!parsed.metadata || !parsed.income || !parsed.expenses || !parsed.balance) {
+      const parsed: unknown = JSON.parse(raw);
+      if (!validateStoredBudgetPayload(parsed)) {
         throw new Error('missing required fields');
       }
-      // Check if data exists and has required structure (allow zero values - they might be intentionally cleared)
-      return parsed as LocalStorageState;
+      const reconciled = reconcileBudgetData(parsed);
+      return {
+        ...reconciled,
+        transactions: Array.isArray(parsed.transactions) ? (parsed.transactions as Transaction[]) : [],
+      };
     } catch (e) {
       console.warn('[LocalStorageAdapter] Dados inválidos ou ausentes; usando dados padrão.', e);
-      return { ...budgetData, transactions: [] };
+      return { ...reconcileBudgetData(budgetData), transactions: [] };
     }
   }
 
@@ -43,51 +49,60 @@ export class LocalStorageAdapter implements IBudgetService {
     const modifiedEntries = new Set<BudgetEntry>();
 
     for (const m of affectedMonths) {
-      // Step 1: Recalculate Income Categories
+      // Step 1: Recalculate Income Categories in integer minor units
       for (const cat of Object.keys(income)) {
-        const sum = transactions
+        const incomeEntry = income[cat];
+        if (!incomeEntry) continue;
+        const sumMinor = transactions
           .filter(t => t.mes === m && t.categoria === cat)
-          .reduce((acc, t) => acc + t.valor, 0);
+          .reduce((acc, t) => acc + majorToMinor(t.valor), 0);
 
-        income[cat].monthlyValues[m] = sum;
-        modifiedEntries.add(income[cat]);
+        incomeEntry.monthlyValues[m] = minorToMajor(sumMinor);
+        modifiedEntries.add(incomeEntry);
       }
 
       // Step 2: For each expense category (excluding "Gastos Total"),
-      // sum all Transaction.valor where mes === m && categoria === cat; store as negative value
+      // sum all Transaction.valor where mes === m && categoria === cat in integer minor units; store as negative value
       for (const cat of Object.keys(expenses)) {
         if (cat === 'Gastos Total') continue;
+        const expenseEntry = expenses[cat];
+        if (!expenseEntry) continue;
 
-        const sum = transactions
+        const sumMinor = transactions
           .filter(t => t.mes === m && t.categoria === cat)
-          .reduce((acc, t) => acc + t.valor, 0);
+          .reduce((acc, t) => acc + majorToMinor(t.valor), 0);
 
-        expenses[cat].monthlyValues[m] = sum === 0 ? 0 : -Math.abs(sum);
-        modifiedEntries.add(expenses[cat]);
+        expenseEntry.monthlyValues[m] = sumMinor === 0 ? 0 : minorToMajor(-Math.abs(sumMinor));
+        modifiedEntries.add(expenseEntry);
       }
 
-      // Step 3: Recalculate "Gastos Total" for m as sum of all category values for m
-      const gastosTotal = Object.entries(expenses)
+      // Step 3: Recalculate "Gastos Total" for m as sum of all category values for m in integer minor units
+      const gastosTotalMinor = Object.entries(expenses)
         .filter(([cat]) => cat !== 'Gastos Total')
-        .reduce((acc, [, entry]) => acc + entry.monthlyValues[m], 0);
+        .reduce((acc, [, entry]) => acc + majorToMinor(entry.monthlyValues[m]), 0);
+      const gastosTotal = minorToMajor(gastosTotalMinor);
 
-      expenses['Gastos Total'].monthlyValues[m] = gastosTotal;
-      modifiedEntries.add(expenses['Gastos Total']);
+      const gastosTotalEntry = expenses['Gastos Total'];
+      if (gastosTotalEntry) {
+        gastosTotalEntry.monthlyValues[m] = gastosTotal;
+        modifiedEntries.add(gastosTotalEntry);
+      }
 
       // Step 4: Recalculate balance.monthlyValues[m] = income total for m + expenses["Gastos Total"].monthlyValues[m]
-      const incomeTotal = Object.values(income).reduce(
-        (acc, entry) => acc + entry.monthlyValues[m],
+      const incomeTotalMinor = Object.values(income).reduce(
+        (acc, entry) => acc + majorToMinor(entry.monthlyValues[m]),
         0
       );
 
-      balance.monthlyValues[m] = incomeTotal + expenses['Gastos Total'].monthlyValues[m];
+      balance.monthlyValues[m] = minorToMajor(incomeTotalMinor + gastosTotalMinor);
       modifiedEntries.add(balance);
     }
 
     // Step 5: After all months, recalculate entry.total for every modified entry
-    // as sum of 12 monthly values
+    // as sum of 12 monthly values in integer minor units
     for (const entry of modifiedEntries) {
-      entry.total = MONTHS.reduce((acc, mo) => acc + entry.monthlyValues[mo], 0);
+      const totalMinor = MONTHS.reduce((acc, mo) => acc + majorToMinor(entry.monthlyValues[mo]), 0);
+      entry.total = minorToMajor(totalMinor);
     }
   }
 
@@ -173,11 +188,11 @@ export class LocalStorageAdapter implements IBudgetService {
 
   updateTransaction(id: string, patch: Partial<Omit<Transaction, 'id'>>): Transaction {
     const index = this.state.transactions.findIndex(t => t.id === id);
-    if (index === -1) {
+    const existing = index !== -1 ? this.state.transactions[index] : undefined;
+    if (index === -1 || !existing) {
       throw new Error(`Transaction with id "${id}" not found`);
     }
 
-    const existing = this.state.transactions[index];
     const updated: Transaction = { ...existing, ...patch };
     this.state.transactions[index] = updated;
     this.state.metadata.updatedDate = new Date().toLocaleString('pt-BR');
@@ -208,6 +223,9 @@ export class LocalStorageAdapter implements IBudgetService {
     }
 
     const [removed] = this.state.transactions.splice(index, 1);
+    if (!removed) {
+      throw new Error(`Transaction with id "${id}" not found`);
+    }
     this.state.metadata.updatedDate = new Date().toLocaleString('pt-BR');
     this.recalculate([removed.mes]);
     try {

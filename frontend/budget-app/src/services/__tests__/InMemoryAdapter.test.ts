@@ -78,7 +78,7 @@ describe('InMemoryAdapter — getBudgetData', () => {
     const data = adapter.getBudgetData();
 
     // The default data has known income for January
-    expect(data.income['Receita'].monthlyValues['Jan']).toBe(budgetData.income['Receita'].monthlyValues['Jan']);
+    expect(data.income['Receita']!.monthlyValues['Jan']).toBe(budgetData.income['Receita']!.monthlyValues['Jan']);
   });
 });
 
@@ -95,10 +95,10 @@ describe('InMemoryAdapter — getTransactions', () => {
     adapter.addTransaction(TX_JAN_ALIMENTACAO);
 
     const list = adapter.getTransactions();
-    list[0].valor = 9999;
+    list[0]!.valor = 9999;
 
     const list2 = adapter.getTransactions();
-    expect(list2[0].valor).toBe(TX_JAN_ALIMENTACAO.valor);
+    expect(list2[0]!.valor).toBe(TX_JAN_ALIMENTACAO.valor);
   });
 });
 
@@ -218,7 +218,7 @@ describe('InMemoryAdapter — deleteTransaction', () => {
     expect(adapter.getTransactions()).toHaveLength(2);
 
     const [first] = adapter.getTransactions();
-    adapter.deleteTransaction(first.id);
+    adapter.deleteTransaction(first!.id);
 
     expect(adapter.getTransactions()).toHaveLength(1);
   });
@@ -258,9 +258,9 @@ describe('InMemoryAdapter — recalculation after addTransaction', () => {
 
     const data = adapter.getBudgetData();
     // Two transactions totalling 150 → stored as -150
-    expect(data.expenses['Alimentação'].monthlyValues['Jan']).toBeCloseTo(-150, 5);
+    expect(data.expenses['Alimentação']!.monthlyValues['Jan']).toBeCloseTo(-150, 5);
     // Other months remain 0
-    expect(data.expenses['Alimentação'].monthlyValues['Fev']).toBe(0);
+    expect(data.expenses['Alimentação']!.monthlyValues['Fev']).toBe(0);
   });
 
   it('Req 3.2 — updates "Gastos Total" for the affected month', () => {
@@ -268,7 +268,7 @@ describe('InMemoryAdapter — recalculation after addTransaction', () => {
     adapter.addTransaction({ valor: 200, categoria: 'Contas', mes: 'Mar', data: '2026-03-10' });
 
     const data = adapter.getBudgetData();
-    expect(data.expenses['Gastos Total'].monthlyValues['Mar']).toBeCloseTo(-300, 5);
+    expect(data.expenses['Gastos Total']!.monthlyValues['Mar']).toBeCloseTo(-300, 5);
   });
 
   it('Req 3.3 — updates balance.monthlyValues for the affected month', () => {
@@ -284,7 +284,7 @@ describe('InMemoryAdapter — recalculation after addTransaction', () => {
     adapter.addTransaction({ valor: 60, categoria: 'Farmácia', mes: 'Jun', data: '2026-06-15' });
 
     const data = adapter.getBudgetData();
-    const entry = data.expenses['Farmácia'];
+    const entry = data.expenses['Farmácia']!;
     const expectedTotal = MONTHS.reduce((acc, m) => acc + entry.monthlyValues[m], 0);
     expect(entry.total).toBeCloseTo(expectedTotal, 5);
   });
@@ -302,7 +302,7 @@ describe('InMemoryAdapter — recalculation after addTransaction', () => {
     adapter.addTransaction({ valor: 300, categoria: 'Compras', mes: 'Fev', data: '2026-02-20' });
 
     const data = adapter.getBudgetData();
-    const entry = data.expenses['Gastos Total'];
+    const entry = data.expenses['Gastos Total']!;
     const expectedTotal = MONTHS.reduce((acc, m) => acc + entry.monthlyValues[m], 0);
     expect(entry.total).toBeCloseTo(expectedTotal, 5);
   });
@@ -321,7 +321,7 @@ describe('InMemoryAdapter — recalculation after deleteTransaction', () => {
 
     const data = adapter.getBudgetData();
     // Only the 50 transaction remains → -50
-    expect(data.expenses['Alimentação'].monthlyValues['Jan']).toBeCloseTo(-50, 5);
+    expect(data.expenses['Alimentação']!.monthlyValues['Jan']).toBeCloseTo(-50, 5);
   });
 
   it('Req 3.2 — "Gastos Total" is recalculated after deletion', () => {
@@ -333,7 +333,7 @@ describe('InMemoryAdapter — recalculation after deleteTransaction', () => {
 
     const data = adapter.getBudgetData();
     // Only Alimentação 100 remains → -100
-    expect(data.expenses['Gastos Total'].monthlyValues['Mai']).toBeCloseTo(-100, 5);
+    expect(data.expenses['Gastos Total']!.monthlyValues['Mai']).toBeCloseTo(-100, 5);
   });
 
   it('Req 3.3 — balance is recalculated after deletion', () => {
@@ -355,7 +355,7 @@ describe('InMemoryAdapter — recalculation after deleteTransaction', () => {
     adapter.deleteTransaction(t1.id);
 
     const data = adapter.getBudgetData();
-    const entry = data.expenses['Farmácia'];
+    const entry = data.expenses['Farmácia']!;
     const expectedTotal = MONTHS.reduce((acc, m) => acc + entry.monthlyValues[m], 0);
     expect(entry.total).toBeCloseTo(expectedTotal, 5);
     expect(entry.total).toBeCloseTo(-200, 5);
@@ -387,9 +387,9 @@ describe('InMemoryAdapter — recalculation after updateTransaction with month c
 
     const data = adapter.getBudgetData();
     // Jan should now be 0 (transaction moved away)
-    expect(data.expenses['Alimentação'].monthlyValues['Jan']).toBeCloseTo(0, 5);
+    expect(data.expenses['Alimentação']!.monthlyValues['Jan']).toBeCloseTo(0, 5);
     // Feb should now be -100
-    expect(data.expenses['Alimentação'].monthlyValues['Fev']).toBeCloseTo(-100, 5);
+    expect(data.expenses['Alimentação']!.monthlyValues['Fev']).toBeCloseTo(-100, 5);
   });
 
   it('Req 3.2 — "Gastos Total" is updated for both old and new month', () => {
@@ -399,8 +399,8 @@ describe('InMemoryAdapter — recalculation after updateTransaction with month c
     adapter.updateTransaction(created.id, { mes: 'Abr' });
 
     const data = adapter.getBudgetData();
-    expect(data.expenses['Gastos Total'].monthlyValues['Mar']).toBeCloseTo(0, 5);
-    expect(data.expenses['Gastos Total'].monthlyValues['Abr']).toBeCloseTo(-250, 5);
+    expect(data.expenses['Gastos Total']!.monthlyValues['Mar']).toBeCloseTo(0, 5);
+    expect(data.expenses['Gastos Total']!.monthlyValues['Abr']).toBeCloseTo(-250, 5);
   });
 
   it('Req 3.3 — balance is updated for both old and new month', () => {
@@ -421,7 +421,7 @@ describe('InMemoryAdapter — recalculation after updateTransaction with month c
     adapter.updateTransaction(created.id, { mes: 'Dez' });
 
     const data = adapter.getBudgetData();
-    const entry = data.expenses['Alimentação'];
+    const entry = data.expenses['Alimentação']!;
     const expectedTotal = MONTHS.reduce((acc, m) => acc + entry.monthlyValues[m], 0);
     expect(entry.total).toBeCloseTo(expectedTotal, 5);
     expect(entry.total).toBeCloseTo(-120, 5);
@@ -441,9 +441,9 @@ describe('InMemoryAdapter — recalculation after updateTransaction with categor
 
     const data = adapter.getBudgetData();
     // Alimentação Jan should now be 0
-    expect(data.expenses['Alimentação'].monthlyValues['Jan']).toBeCloseTo(0, 5);
+    expect(data.expenses['Alimentação']!.monthlyValues['Jan']).toBeCloseTo(0, 5);
     // Farmácia Jan should now be -75
-    expect(data.expenses['Farmácia'].monthlyValues['Jan']).toBeCloseTo(-75, 5);
+    expect(data.expenses['Farmácia']!.monthlyValues['Jan']).toBeCloseTo(-75, 5);
   });
 
   it('Req 3.2 — "Gastos Total" remains consistent after category change', () => {
@@ -454,11 +454,11 @@ describe('InMemoryAdapter — recalculation after updateTransaction with categor
 
     const data = adapter.getBudgetData();
     // Gastos Total for Feb should still be -90 (same month, different category)
-    expect(data.expenses['Gastos Total'].monthlyValues['Fev']).toBeCloseTo(-90, 5);
+    expect(data.expenses['Gastos Total']!.monthlyValues['Fev']).toBeCloseTo(-90, 5);
     // Contas Feb should be 0
-    expect(data.expenses['Contas'].monthlyValues['Fev']).toBeCloseTo(0, 5);
+    expect(data.expenses['Contas']!.monthlyValues['Fev']).toBeCloseTo(0, 5);
     // Compras Feb should be -90
-    expect(data.expenses['Compras'].monthlyValues['Fev']).toBeCloseTo(-90, 5);
+    expect(data.expenses['Compras']!.monthlyValues['Fev']).toBeCloseTo(-90, 5);
   });
 
   it('annual totals are correct after category change', () => {
@@ -470,13 +470,13 @@ describe('InMemoryAdapter — recalculation after updateTransaction with categor
     const data = adapter.getBudgetData();
 
     // Alimentação total should be 0
-    const alimentacaoEntry = data.expenses['Alimentação'];
+    const alimentacaoEntry = data.expenses['Alimentação']!;
     const alimentacaoExpected = MONTHS.reduce((acc, m) => acc + alimentacaoEntry.monthlyValues[m], 0);
     expect(alimentacaoEntry.total).toBeCloseTo(alimentacaoExpected, 5);
     expect(alimentacaoEntry.total).toBeCloseTo(0, 5);
 
     // Gastos Extras total should be -60
-    const gastosExtrasEntry = data.expenses['Gastos Extras'];
+    const gastosExtrasEntry = data.expenses['Gastos Extras']!;
     const gastosExtrasExpected = MONTHS.reduce((acc, m) => acc + gastosExtrasEntry.monthlyValues[m], 0);
     expect(gastosExtrasEntry.total).toBeCloseTo(gastosExtrasExpected, 5);
     expect(gastosExtrasEntry.total).toBeCloseTo(-60, 5);
@@ -517,10 +517,10 @@ describe('InMemoryAdapter — annual totals invariant (entry.total = sum of 12 m
     assertTotalEqualsSum(data.balance);
 
     // Spot-check specific values
-    expect(data.expenses['Alimentação'].monthlyValues['Jan']).toBeCloseTo(0, 5);
-    expect(data.expenses['Alimentação'].monthlyValues['Fev']).toBeCloseTo(-150, 5);
-    expect(data.expenses['Contas'].monthlyValues['Mar']).toBeCloseTo(0, 5);
-    expect(data.expenses['Farmácia'].monthlyValues['Jun']).toBeCloseTo(-50, 5);
+    expect(data.expenses['Alimentação']!.monthlyValues['Jan']).toBeCloseTo(0, 5);
+    expect(data.expenses['Alimentação']!.monthlyValues['Fev']).toBeCloseTo(-150, 5);
+    expect(data.expenses['Contas']!.monthlyValues['Mar']).toBeCloseTo(0, 5);
+    expect(data.expenses['Farmácia']!.monthlyValues['Jun']).toBeCloseTo(-50, 5);
   });
 
   it('Req 3.4 — income entry.total equals sum of 12 monthly values (unchanged by transactions)', () => {

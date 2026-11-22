@@ -28,6 +28,9 @@ export function normalizeDateToISO(input: string): string {
   const slashOrDotMatch = trimmed.match(/^(\d{1,2})[/\-.](\d{1,2})[/\-.](\d{2,4})$/);
   if (slashOrDotMatch) {
     const [, first, second, rawYear] = slashOrDotMatch;
+    if (!first || !second || !rawYear) {
+      return trimmed;
+    }
     const year = rawYear.length === 2
       ? (parseInt(rawYear, 10) >= 70 ? '19' : '20') + rawYear
       : rawYear;

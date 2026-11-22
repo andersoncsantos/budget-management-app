@@ -25,7 +25,7 @@ export default function LoginPage() {
         await register({ email, password });
       }
       navigate('/');
-    } catch (err) {
+    } catch {
       // Error is handled by the context
     }
   };

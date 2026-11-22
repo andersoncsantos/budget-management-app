@@ -11,8 +11,8 @@ const MONTHS: Month[] = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago',
 
 const arbMonth = fc.constantFrom(...MONTHS);
 
-// Use fc.double for 64-bit precision; fc.float requires 32-bit boundaries
-const arbValor = fc.double({ min: 0.01, max: 999_999_999.99, noNaN: true });
+// Generate valid BRL monetary amounts backed by integer minor units (0.01 to 999,999,999.99)
+const arbValor = fc.integer({ min: 1, max: 99_999_999_999 }).map(cents => cents / 100);
 
 // Use only categories that exist in the default budgetData so recalculation
 // targets known expense buckets.
@@ -185,7 +185,7 @@ describe('InMemoryAdapter — Property-Based Tests', () => {
           const before = allBefore.length;
 
           // Pick a deterministic existing transaction to delete
-          const target = allBefore[indexSeed % allBefore.length];
+          const target = allBefore[indexSeed % allBefore.length]!;
 
           adapter.deleteTransaction(target.id);
           const after = adapter.getTransactions();
@@ -249,7 +249,7 @@ describe('InMemoryAdapter — Property-Based Tests', () => {
               .filter(([cat]) => cat !== 'Gastos Total')
               .reduce((acc, [, entry]) => acc + entry.monthlyValues[m], 0);
 
-            const gastosTotal = data.expenses['Gastos Total'].monthlyValues[m];
+            const gastosTotal = data.expenses['Gastos Total']!.monthlyValues[m];
 
             expect(gastosTotal).toBeCloseTo(sumOfCategories, 5);
           }
@@ -277,7 +277,7 @@ describe('InMemoryAdapter — Property-Based Tests', () => {
               0
             );
 
-            const gastosTotal = data.expenses['Gastos Total'].monthlyValues[m];
+            const gastosTotal = data.expenses['Gastos Total']!.monthlyValues[m];
             const expectedBalance = incomeTotal + gastosTotal;
             const actualBalance = data.balance.monthlyValues[m];
 

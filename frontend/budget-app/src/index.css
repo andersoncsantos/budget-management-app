@@ -15,6 +15,7 @@
   --color-bg-success: var(--color-bg-success);
   --color-bg-warning: var(--color-bg-warning);
   --color-bg-error: var(--color-bg-error);
+  --color-bg-info: var(--color-bg-info);
 
   --color-text-primary: var(--color-text-primary);
   --color-text-secondary: var(--color-text-secondary);
@@ -32,17 +33,40 @@
   --color-primary-hover: var(--color-primary-hover);
   --color-primary-light: var(--color-primary-light);
   --color-secondary: var(--color-secondary);
+  --color-neutral: var(--color-neutral);
+
+  --color-positive: var(--color-positive);
+  --color-positive-hover: var(--color-positive-hover);
+  --color-positive-light: var(--color-positive-light);
   --color-success: var(--color-success);
+  --color-success-hover: var(--color-success-hover);
   --color-success-light: var(--color-success-light);
+
   --color-warning: var(--color-warning);
+  --color-warning-hover: var(--color-warning-hover);
   --color-warning-light: var(--color-warning-light);
+
+  --color-negative: var(--color-negative);
+  --color-negative-hover: var(--color-negative-hover);
+  --color-negative-light: var(--color-negative-light);
   --color-error: var(--color-error);
+  --color-error-hover: var(--color-error-hover);
   --color-error-light: var(--color-error-light);
+
   --color-info: var(--color-info);
+
+  --color-chart-1: var(--color-chart-1);
+  --color-chart-2: var(--color-chart-2);
+  --color-chart-3: var(--color-chart-3);
+  --color-chart-4: var(--color-chart-4);
+  --color-chart-5: var(--color-chart-5);
+  --color-chart-6: var(--color-chart-6);
+  --color-chart-7: var(--color-chart-7);
+  --color-chart-8: var(--color-chart-8);
 
   --color-focus-ring: var(--color-focus-ring);
 
-  /* Legacy aliases for backward compat during migration */
+  /* Legacy aliases for backward compatibility during incremental migration */
   --color-bg-main: var(--color-bg-app);
   --color-bg-surface: var(--color-bg-card);
   --color-text-main: var(--color-text-primary);
@@ -64,5 +88,9 @@
 body {
   background-color: var(--color-bg-app);
   color: var(--color-text-primary);
-  font-family: 'Inter', system-ui, sans-serif;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
 }

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 import { X, Upload, FileText, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
 import { ImportService, normalizeDateToISO, monthFromISO, parseAmount, isValidDescription } from '../services/ImportService';
 import { useBudget } from '../context/useBudget';
@@ -26,46 +26,17 @@ type ImportResultData = {
 
 const CHUNK_SIZE = 100;
 
-const ImportModal = ({ isOpen, onClose }: ImportModalProps) => {
+const ImportModalContent = ({ onClose }: { onClose: () => void }) => {
   const { addTransactions, useApi, transactions } = useBudget();
   const [file, setFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [importResult, setImportResult] = useState<ImportResultData | null>(null);
-  const [validRows, setValidRows] = useState<ImportRow[]>([]);
-  const [parseErrors, setParseErrors] = useState<ImportError[]>([]);
-  const [duplicateSkips, setDuplicateSkips] = useState<ImportError[]>([]);
-  
-  const processedRef = useRef(false);
-
-  useEffect(() => {
-    if (isOpen) {
-      setFile(null);
-      setIsProcessing(false);
-      setProgress(0);
-      setImportResult(null);
-      setValidRows([]);
-      setParseErrors([]);
-      setDuplicateSkips([]);
-      processedRef.current = false;
-    }
-  }, [isOpen]);
-
-  useEffect(() => {
-    if (validRows.length > 0 && !processedRef.current && isOpen) {
-      processedRef.current = true;
-      processImport();
-    }
-  }, [validRows, isOpen]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setFile(e.target.files[0]);
       setImportResult(null);
-      setParseErrors([]);
-      setDuplicateSkips([]);
-      setValidRows([]);
-      processedRef.current = false;
     }
   };
 
@@ -78,21 +49,25 @@ const ImportModal = ({ isOpen, onClose }: ImportModalProps) => {
     ...(tx.banco ? { banco: tx.banco } : {}),
   });
 
-  const processImport = async () => {
+  const processImport = async (
+    rowsToImport: ImportRow[],
+    initialParseErrors: ImportError[],
+    initialDuplicateSkips: ImportError[]
+  ) => {
     setIsProcessing(true);
     setProgress(10);
 
-    const totalBeforeImport = validRows.length + duplicateSkips.length + parseErrors.length;
+    const totalBeforeImport = rowsToImport.length + initialDuplicateSkips.length + initialParseErrors.length;
 
     try {
-      if (validRows.length > CHUNK_SIZE && useApi) {
-        const totalChunks = Math.ceil(validRows.length / CHUNK_SIZE);
+      if (rowsToImport.length > CHUNK_SIZE && useApi) {
+        const totalChunks = Math.ceil(rowsToImport.length / CHUNK_SIZE);
         let importedCount = 0;
         let apiSkippedCount = 0;
-        const allErrors: ImportError[] = [...parseErrors, ...duplicateSkips];
+        const allErrors: ImportError[] = [...initialParseErrors, ...initialDuplicateSkips];
 
         for (let i = 0; i < totalChunks; i++) {
-          const chunk = validRows.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
+          const chunk = rowsToImport.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
           const chunkNum = i + 1;
 
           setProgress(10 + Math.round((chunkNum / totalChunks) * 80));
@@ -117,19 +92,19 @@ const ImportModal = ({ isOpen, onClose }: ImportModalProps) => {
           totalRecords: totalBeforeImport,
           successCount: importedCount,
           errorCount: allErrors.length,
-          skippedCount: duplicateSkips.length + apiSkippedCount,
+          skippedCount: initialDuplicateSkips.length + apiSkippedCount,
           errors: allErrors,
         });
       } else {
         setProgress(50);
-        const report = validRows.length > 0 ? await addTransactions(validRows) : { imported: 0, skipped: 0 };
+        const report = rowsToImport.length > 0 ? await addTransactions(rowsToImport) : { imported: 0, skipped: 0 };
         setProgress(100);
         setImportResult({
           totalRecords: totalBeforeImport,
           successCount: report.imported,
-          errorCount: parseErrors.length + duplicateSkips.length + (report.errors?.length ?? 0),
-          skippedCount: duplicateSkips.length + report.skipped,
-          errors: [...parseErrors, ...duplicateSkips, ...(report.errors ?? [])],
+          errorCount: initialParseErrors.length + initialDuplicateSkips.length + (report.errors?.length ?? 0),
+          skippedCount: initialDuplicateSkips.length + report.skipped,
+          errors: [...initialParseErrors, ...initialDuplicateSkips, ...(report.errors ?? [])],
         });
       }
     } catch (e) {
@@ -137,9 +112,9 @@ const ImportModal = ({ isOpen, onClose }: ImportModalProps) => {
       setImportResult({
         totalRecords: totalBeforeImport,
         successCount: 0,
-        errorCount: parseErrors.length + duplicateSkips.length + 1,
+        errorCount: initialParseErrors.length + initialDuplicateSkips.length + 1,
         skippedCount: 0,
-        errors: [...parseErrors, ...duplicateSkips, { line: 0, message }]
+        errors: [...initialParseErrors, ...initialDuplicateSkips, { line: 0, message }]
       });
     } finally {
       setIsProcessing(false);
@@ -151,7 +126,6 @@ const ImportModal = ({ isOpen, onClose }: ImportModalProps) => {
 
     setIsProcessing(true);
     setProgress(5);
-    setParseErrors([]);
 
     try {
       let result;
@@ -200,6 +174,7 @@ const ImportModal = ({ isOpen, onClose }: ImportModalProps) => {
       const nonDuplicates: ImportRow[] = [];
       for (let i = 0; i < valid.length; i++) {
         const row = valid[i];
+        if (!row) continue;
         const isDuplicate = transactions.some(
           tx => tx.data === row.data &&
                 tx.categoria === row.categoria &&
@@ -213,10 +188,7 @@ const ImportModal = ({ isOpen, onClose }: ImportModalProps) => {
         }
       }
 
-      setDuplicateSkips(dups);
-      setParseErrors(errors);
-      setValidRows(nonDuplicates);
-      
+      await processImport(nonDuplicates, errors, dups);
     } catch (e) {
       const message = e instanceof Error ? e.message : 'Unknown error';
       setImportResult({
@@ -229,8 +201,6 @@ const ImportModal = ({ isOpen, onClose }: ImportModalProps) => {
       setIsProcessing(false);
     }
   };
-
-  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-bg-overlay">
@@ -358,6 +328,11 @@ const ImportModal = ({ isOpen, onClose }: ImportModalProps) => {
       </div>
     </div>
   );
+};
+
+const ImportModal = ({ isOpen, onClose }: ImportModalProps) => {
+  if (!isOpen) return null;
+  return <ImportModalContent onClose={onClose} />;
 };
 
 export default ImportModal;

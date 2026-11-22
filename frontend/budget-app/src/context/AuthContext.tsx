@@ -3,7 +3,6 @@ import {
   useContext,
   useState,
   useCallback,
-  useEffect,
   type ReactNode,
 } from 'react';
 import { apiClient } from '../services/ApiClient';
@@ -28,24 +27,26 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
+function getInitialAuthState(): { user: AuthUser | null; token: string | null } {
+  const storedToken = apiClient.getToken();
+  const storedUserId = localStorage.getItem('userId');
+  const storedEmail = localStorage.getItem('userEmail');
+
+  if (storedToken && storedUserId && storedEmail) {
+    return {
+      token: storedToken,
+      user: { userId: storedUserId, email: storedEmail },
+    };
+  }
+  return { user: null, token: null };
+}
+
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<AuthUser | null>(null);
-  const [token, setToken] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [initialAuth] = useState(getInitialAuthState);
+  const [user, setUser] = useState<AuthUser | null>(initialAuth.user);
+  const [token, setToken] = useState<string | null>(initialAuth.token);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  // Check for existing token on mount
-  useEffect(() => {
-    const storedToken = apiClient.getToken();
-    const storedUserId = localStorage.getItem('userId');
-    const storedEmail = localStorage.getItem('userEmail');
-
-    if (storedToken && storedUserId && storedEmail) {
-      setToken(storedToken);
-      setUser({ userId: storedUserId, email: storedEmail });
-    }
-    setIsLoading(false);
-  }, []);
 
   const login = useCallback(async (data: LoginRequest) => {
     setIsLoading(true);

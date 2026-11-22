@@ -1,9 +1,27 @@
 import { useState, useRef, useEffect } from 'react';
 import { useBudget } from '../context/useBudget';
-import { SummaryCard } from '../components/SummaryCard';
 import { AnalyticsSection } from '../components/AnalyticsSection';
-import { TrendingUp, TrendingDown, Wallet, Calendar, X, Pencil, PiggyBank } from 'lucide-react';
-import { formatBRL } from '../utils/currency';
+import {
+  TrendingUp,
+  TrendingDown,
+  Wallet,
+  Calendar,
+  X,
+  Pencil,
+  PiggyBank,
+  Check,
+  Eye,
+  EyeOff,
+} from 'lucide-react';
+import { parseBRL } from '../utils/currency';
+import {
+  calculateDashboardComparison,
+  calculateKpiSummary,
+} from '../features/budgets';
+import { KpiCard } from '../shared/ui/KpiCard';
+import { MoneyDisplay } from '../shared/ui/MoneyDisplay';
+import { usePortalUrlState } from '../shared/hooks/usePortalUrlState';
+import { usePrivacyMask } from '../shared/hooks/usePrivacyMask';
 
 const formatDate = (date: string | null | undefined): string => {
   if (!date) return '—';
@@ -17,21 +35,14 @@ const formatDate = (date: string | null | undefined): string => {
 
 const DashboardPage = () => {
   const { data, updateMetadata } = useBudget();
+  const { period, activeMonths, periodLabel } = usePortalUrlState();
+  const { isHidden, togglePrivacy } = usePrivacyMask();
   const [isEditingRealBalance, setIsEditingRealBalance] = useState(false);
   const [realBalanceInput, setRealBalanceInput] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const totalIncome = Object.values(data.income).reduce((acc, e) => acc + e.total, 0);
-  const totalExpenses = Math.abs(data.expenses['Gastos Total'].total);
-  const netBalance = data.balance.total;
-
-  const analyticsStyleExpenses = Math.abs(
-    Object.entries(data.expenses)
-      .filter(([name]) => name !== 'Gastos Total' && !name.toLowerCase().includes('total'))
-      .reduce((acc, [, entry]) => acc + (entry.monthlyValues['Mar'] || 0), 0)
-  );
-  const gastosTotalMar = Math.abs(data.expenses['Gastos Total']?.monthlyValues['Mar'] || 0);
-  const marDifference = analyticsStyleExpenses - gastosTotalMar;
+  const { totalIncome, totalExpenses, netBalance } = calculateKpiSummary(data, activeMonths);
+  const comparison = calculateDashboardComparison(data, period, activeMonths);
 
   useEffect(() => {
     if (isEditingRealBalance && inputRef.current) {
@@ -46,8 +57,8 @@ const DashboardPage = () => {
   };
 
   const handleRealBalanceSave = () => {
-    const value = parseFloat(realBalanceInput.replace(/\./g, '').replace(',', '.'));
-    if (!isNaN(value)) {
+    const value = parseBRL(realBalanceInput);
+    if (!Number.isNaN(value)) {
       updateMetadata({ realBalance: value });
     }
     setIsEditingRealBalance(false);
@@ -65,23 +76,50 @@ const DashboardPage = () => {
     <div className="max-w-7xl mx-auto space-y-8">
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="space-y-1">
-          <h1 className="text-3xl font-bold text-text-primary tracking-tight">Orçamento 2026</h1>
+          <div className="flex flex-wrap items-center gap-3">
+            <h1 className="text-3xl font-bold text-text-primary tracking-tight">
+              Orçamento 2026
+            </h1>
+            <span className="px-3 py-1 text-xs font-semibold rounded-full bg-primary-light text-primary border border-primary/20">
+              {periodLabel}
+            </span>
+          </div>
           <p className="text-text-muted flex items-center gap-2 text-sm">
-            <Calendar size={16} />
+            <Calendar size={16} aria-hidden="true" />
             Atualizado em: {formatDate(data.metadata.updatedDate)}
           </p>
         </div>
+
         <div className="flex items-center gap-4">
-          <div className="flex items-center gap-6 bg-bg-card p-4 rounded-2xl shadow-sm border border-border-default">
+          <div className="flex items-center gap-4 bg-bg-card p-4 rounded-2xl shadow-sm border border-border-default">
             <div className="text-right">
-              <p className="text-xs font-medium text-text-muted uppercase tracking-wider flex items-center justify-end gap-4">
-                <PiggyBank size={20} />
-                Saldo Real
-              </p>
+              <div className="flex items-center justify-end gap-2">
+                <p className="text-xs font-semibold text-text-muted uppercase tracking-wider flex items-center gap-2">
+                  <PiggyBank size={18} aria-hidden="true" />
+                  Saldo Real
+                </p>
+                <button
+                  type="button"
+                  onClick={togglePrivacy}
+                  aria-label={isHidden ? 'Mostrar Saldo Real' : 'Ocultar Saldo Real'}
+                  title={isHidden ? 'Mostrar valores' : 'Ocultar valores'}
+                  className="p-1 rounded-lg text-text-muted hover:text-text-primary hover:bg-bg-elevated focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring transition-colors"
+                >
+                  {isHidden ? (
+                    <EyeOff className="w-3.5 h-3.5" aria-hidden="true" />
+                  ) : (
+                    <Eye className="w-3.5 h-3.5" aria-hidden="true" />
+                  )}
+                </button>
+              </div>
+
               {isEditingRealBalance ? (
-                <div className="flex items-center gap-2">
-                  <span className="text-lg text-text-secondary">R$</span>
+                <div className="flex items-center gap-2 mt-1">
+                  <label htmlFor="real-balance-input" className="text-lg text-text-secondary">
+                    R$
+                  </label>
                   <input
+                    id="real-balance-input"
                     ref={inputRef}
                     type="text"
                     inputMode="decimal"
@@ -90,38 +128,45 @@ const DashboardPage = () => {
                     onBlur={handleRealBalanceSave}
                     onKeyDown={handleRealBalanceKeyDown}
                     onFocus={(e) => e.target.select()}
-                    className="w-36 text-xl font-bold text-text-primary bg-bg-input border-2 border-primary rounded-lg px-3 py-1.5 text-right focus:outline-none focus:ring-2 focus:ring-focus-ring focus:border-focus-ring transition-all shadow-sm"
+                    className="w-36 text-xl font-bold text-text-primary tabular-nums bg-bg-input border-2 border-primary rounded-lg px-3 py-1.5 text-right focus:outline-none focus:ring-2 focus:ring-focus-ring focus:border-focus-ring transition-all shadow-sm"
                     placeholder="0,00"
                     autoFocus
                   />
                   <button
+                    type="button"
                     onClick={handleRealBalanceSave}
+                    aria-label="Salvar Saldo Real"
                     className="p-1.5 rounded-lg bg-primary hover:bg-primary-hover text-text-inverse transition-colors"
                     title="Salvar"
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                    </svg>
+                    <Check className="h-4 w-4" aria-hidden="true" />
                   </button>
                   <button
+                    type="button"
                     onClick={() => setIsEditingRealBalance(false)}
+                    aria-label="Cancelar edição do Saldo Real"
                     className="p-1.5 rounded-lg bg-bg-elevated hover:bg-border-hover text-text-secondary transition-colors"
                     title="Cancelar (Esc)"
                   >
-                    <X className="w-4 h-4" />
+                    <X className="w-4 h-4" aria-hidden="true" />
                   </button>
                 </div>
               ) : (
-                <div
+                <button
+                  type="button"
                   onClick={handleRealBalanceClick}
-                  className="flex items-center gap-2 cursor-pointer hover:bg-bg-card rounded-lg px-3 py-1.5 -ml-3 transition-all duration-200 group border-2 border-transparent hover:border-primary/30"
+                  className="flex items-center justify-end gap-2 cursor-pointer hover:bg-bg-elevated/60 rounded-lg px-3 py-1.5 -mr-2 transition-all duration-150 group border-2 border-transparent hover:border-primary/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring"
                   title="Clique para editar"
+                  aria-label="Editar Saldo Real"
                 >
-                  <p className="text-xl font-bold text-text-primary">
-                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(data.metadata.realBalance)}
-                  </p>
-                  <Pencil className="w-4 h-4 text-text-muted opacity-0 group-hover:opacity-100 transition-all duration-200" />
-                </div>
+                  <span className="text-xl font-bold text-text-primary tabular-nums">
+                    <MoneyDisplay value={data.metadata.realBalance} />
+                  </span>
+                  <Pencil
+                    aria-hidden="true"
+                    className="w-4 h-4 text-text-muted opacity-70 group-hover:opacity-100 transition-opacity"
+                  />
+                </button>
               )}
             </div>
           </div>
@@ -129,44 +174,37 @@ const DashboardPage = () => {
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <SummaryCard
+        <KpiCard
           title="Total Receitas"
           value={totalIncome}
           icon={TrendingUp}
-          color="success"
-          description="Soma de todas as entradas do ano"
+          tone="positive"
+          description={periodLabel}
+          tooltip="Soma de todas as receitas registradas nos meses do período selecionado, calculada em centavos."
+          delta={comparison.incomeDelta}
         />
-        <SummaryCard
+        <KpiCard
           title="Total Despesas"
           value={totalExpenses}
           icon={TrendingDown}
-          color="danger"
-          description="Soma de todas as saídas do ano"
+          tone="negative"
+          description={periodLabel}
+          tooltip="Soma de todas as categorias de despesa no período selecionado. Reduções de gasto são sinalizadas como favoráveis."
+          delta={comparison.expensesDelta}
         />
-        <SummaryCard
+        <KpiCard
           title="Saldo Líquido"
           value={netBalance}
           icon={Wallet}
-          color="primary"
-          description="Diferença entre receitas e despesas"
+          tone="primary"
+          description={periodLabel}
+          tooltip="Diferença exata entre Total Receitas e Total Despesas no período selecionado (Receitas − Despesas)."
+          delta={comparison.netDelta}
+          showPrivacyToggle
         />
       </div>
 
-      {marDifference !== 0 && (
-        <div className="bg-bg-error border border-error/30 rounded-lg p-4 text-sm">
-          <h3 className="font-bold text-error mb-2">Data Inconsistency Detected</h3>
-          <div className="space-y-1 text-error/80">
-            <p><strong>Tendência Mensal (Mar):</strong> {formatBRL(analyticsStyleExpenses)}</p>
-            <p><strong>Gastos Total (Mar):</strong> {formatBRL(gastosTotalMar)}</p>
-            <p><strong>Difference:</strong> {formatBRL(marDifference)}</p>
-            <p className="text-xs text-error/60 mt-2">
-              The sum of individual expense categories doesn't match the pre-computed Gastos Total.
-            </p>
-          </div>
-        </div>
-      )}
-
-      <AnalyticsSection />
+      <AnalyticsSection activeMonths={activeMonths} periodLabel={periodLabel} />
     </div>
   );
 };

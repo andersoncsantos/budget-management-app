@@ -1,27 +1,56 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { useBudget } from '../context/useBudget';
-import { formatBRL } from '../utils/currency';
-import { Search, Filter, Calendar, Edit, Trash2, X, FileText, Tag, DollarSign, File, Plus, UploadCloud } from 'lucide-react';
+import {
+  Search,
+  Filter,
+  Calendar,
+  Edit,
+  Trash2,
+  FileText,
+  Tag,
+  DollarSign,
+  File,
+  Plus,
+  UploadCloud,
+  ArrowUpDown,
+  Rows3,
+  Rows4,
+} from 'lucide-react';
 import type { Transaction } from '../services/IBudgetService';
 import ImportModal from '../components/ImportModal';
 import AddTransactionModal from '../components/AddTransactionModal';
 import { CategoryBadge } from '../components/ui/category-badge';
+import { Dialog } from '../shared/ui/Dialog';
+import { MoneyDisplay } from '../shared/ui/MoneyDisplay';
+import { majorToMinor, minorToMajor } from '../shared/lib/money';
+import {
+  buildSanitizedStatementCsv,
+  buildSanitizedStatementPrintHtml,
+} from '../shared/lib/exportSanitizer';
+import { usePortalUrlState } from '../shared/hooks/usePortalUrlState';
+import { parseISODateParts } from '../features/budgets';
+
+type TableDensity = 'comfortable' | 'compact';
+type StatementSortField = 'date' | 'category' | 'amount';
+type SortDirection = 'asc' | 'desc';
+
+const DENSITY_STORAGE_KEY = 'budget-app:table-density';
 
 const BANCO_COLORS: Record<string, string> = {
-  'Itaú':         'text-warning',
-  'Bradesco':     'text-error',
-  'Nubank':       'text-primary',
-  'Caixa':        'text-primary',
+  Itaú: 'text-warning',
+  Bradesco: 'text-error',
+  Nubank: 'text-primary',
+  Caixa: 'text-primary',
   'Mercado Pago': 'text-info',
-  'PicPay':       'text-success',
-  'Inter':        'text-warning',
-  'Santander':    'text-error',
+  PicPay: 'text-positive',
+  Inter: 'text-warning',
+  Santander: 'text-error',
 };
 
-const bancoBadgeClass = (banco: string) =>
-  BANCO_COLORS[banco] ?? 'text-text-muted';
+const bancoBadgeClass = (banco: string) => BANCO_COLORS[banco] ?? 'text-text-muted';
 
-const inputClass = 'w-full px-3 py-2.5 rounded-lg border border-border-default focus:ring-2 focus:ring-focus-ring focus:border-transparent outline-none transition-all bg-bg-input text-text-secondary placeholder:text-text-placeholder text-sm';
+const inputClass =
+  'w-full px-3 py-2.5 rounded-lg border border-border-default focus:ring-2 focus:ring-focus-ring focus:border-transparent outline-none transition-all bg-bg-input text-text-primary placeholder:text-text-placeholder text-sm';
 
 interface EditModalProps {
   transaction: Transaction;
@@ -30,9 +59,27 @@ interface EditModalProps {
   onClose: () => void;
 }
 
-const BANKS = ['Itaú', 'Bradesco', 'Nubank', 'Caixa', 'Banco do Brasil', 'Santander', 'Inter', 'Mercado Pago', 'PicPay', 'C6 Bank', 'BTG Pactual', 'XP'];
+const BANKS = [
+  'Itaú',
+  'Bradesco',
+  'Nubank',
+  'Caixa',
+  'Banco do Brasil',
+  'Santander',
+  'Inter',
+  'Mercado Pago',
+  'PicPay',
+  'C6 Bank',
+  'BTG Pactual',
+  'XP',
+];
 
-const EditTransactionModal = ({ transaction, categories, onSave, onClose }: EditModalProps) => {
+const EditTransactionModal = ({
+  transaction,
+  categories,
+  onSave,
+  onClose,
+}: EditModalProps) => {
   const initial = {
     category: transaction.categoria,
     description: transaction.descricao ?? '',
@@ -67,7 +114,7 @@ const EditTransactionModal = ({ transaction, categories, onSave, onClose }: Edit
     else if (desc.length < 3) errs.description = 'Mín 3 caracteres.';
     else if (desc.length > 255) errs.description = 'Máx 255 caracteres.';
     if (!form.amount) errs.amount = 'Obrigatório.';
-    else if (isNaN(parseFloat(form.amount))) errs.amount = 'Número inválido.';
+    else if (Number.isNaN(Number.parseFloat(form.amount))) errs.amount = 'Número inválido.';
     if (!form.date) errs.date = 'Obrigatório.';
     return errs;
   };
@@ -81,173 +128,254 @@ const EditTransactionModal = ({ transaction, categories, onSave, onClose }: Edit
     onSave(transaction.id, {
       categoria: form.category,
       descricao: form.description.trim(),
-      valor: parseFloat(form.amount),
+      valor: Number.parseFloat(form.amount),
       data: form.date,
       banco: form.banco || undefined,
     });
   };
 
-  const set = (key: string, value: string) => setForm(prev => ({ ...prev, [key]: value }));
+  const set = (key: string, value: string) =>
+    setForm((prev) => ({ ...prev, [key]: value }));
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-bg-overlay"
-      onMouseDown={(e) => { if (e.target === e.currentTarget) handleClose(); }}
-    >
-      <div className="bg-bg-modal w-full max-w-2xl rounded-2xl shadow-xl border border-border-default flex flex-col max-h-[90vh]">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-border-default">
-          <div>
-            <h2 className="text-lg font-bold text-text-primary">Editar Transação</h2>
-            <p className="text-xs text-text-muted font-mono mt-0.5">#{transaction.id.slice(0, 8)}</p>
-          </div>
-          <button
-            onClick={handleClose}
-            className="p-2 rounded-full hover:bg-bg-elevated transition-colors text-text-muted hover:text-text-secondary"
-            aria-label="Fechar modal"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        <form id="edit-tx-form" onSubmit={handleSubmit} noValidate className="flex-1 overflow-y-auto">
-          <div className="px-6 py-5 space-y-5">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <label className="text-xs font-semibold text-text-secondary flex items-center gap-1.5">
-                  <Tag className="w-3.5 h-3.5" /> Categoria
-                </label>
-                <select
-                  value={form.category}
-                  onChange={(e) => set('category', e.target.value)}
-                  className={`${inputClass} appearance-none`}
-                >
-                  <option value="" disabled>Selecione a categoria</option>
-                  {categories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
-                </select>
-                {errors.category && <p className="text-xs text-error">{errors.category}</p>}
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-xs font-semibold text-text-secondary flex items-center gap-1.5">
-                  <DollarSign className="w-3.5 h-3.5" /> Valor
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={form.amount}
-                  onChange={(e) => set('amount', e.target.value)}
-                  placeholder="0.00"
-                  className={inputClass}
-                />
-                {errors.amount && <p className="text-xs text-error">{errors.amount}</p>}
-              </div>
+    <>
+      <Dialog
+        isOpen
+        onClose={handleClose}
+        title="Editar Transação"
+        description={`#${transaction.id.slice(0, 8)}`}
+        maxWidthClass="max-w-2xl"
+        footer={
+          <>
+            <button
+              type="button"
+              onClick={handleClose}
+              className="px-4 py-2 text-sm font-semibold text-text-secondary bg-bg-card border border-border-default rounded-lg hover:bg-bg-elevated focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring transition-colors"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              form="edit-tx-form"
+              className="px-5 py-2 text-sm font-semibold text-text-inverse bg-primary hover:bg-primary-hover rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring transition-colors shadow-sm"
+            >
+              Salvar Alterações
+            </button>
+          </>
+        }
+      >
+        <form id="edit-tx-form" onSubmit={handleSubmit} noValidate className="space-y-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <label
+                htmlFor="edit-tx-category"
+                className="text-xs font-semibold text-text-secondary flex items-center gap-1.5"
+              >
+                <Tag className="w-3.5 h-3.5" aria-hidden="true" /> Categoria
+              </label>
+              <select
+                id="edit-tx-category"
+                value={form.category}
+                aria-invalid={!!errors.category}
+                aria-describedby={errors.category ? 'edit-tx-category-error' : undefined}
+                onChange={(e) => set('category', e.target.value)}
+                className={`${inputClass} appearance-none`}
+              >
+                <option value="" disabled>
+                  Selecione a categoria
+                </option>
+                {categories.map((cat) => (
+                  <option key={cat} value={cat}>
+                    {cat}
+                  </option>
+                ))}
+              </select>
+              {errors.category && (
+                <p id="edit-tx-category-error" className="text-xs text-error">
+                  {errors.category}
+                </p>
+              )}
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-semibold text-text-secondary flex items-center gap-1.5">
-                <FileText className="w-3.5 h-3.5" /> Descrição
+              <label
+                htmlFor="edit-tx-amount"
+                className="text-xs font-semibold text-text-secondary flex items-center gap-1.5"
+              >
+                <DollarSign className="w-3.5 h-3.5" aria-hidden="true" /> Valor
               </label>
               <input
-                type="text"
-                value={form.description}
-                onChange={(e) => set('description', e.target.value)}
-                placeholder="Enter transaction description"
-                maxLength={255}
+                id="edit-tx-amount"
+                type="number"
+                step="0.01"
+                value={form.amount}
+                aria-invalid={!!errors.amount}
+                aria-describedby={errors.amount ? 'edit-tx-amount-error' : undefined}
+                onChange={(e) => set('amount', e.target.value)}
+                placeholder="0.00"
                 className={inputClass}
               />
-              {errors.description
-                ? <p className="text-xs text-error">{errors.description}</p>
-                : <p className="text-xs text-text-muted">{form.description.length}/255</p>
+              {errors.amount && (
+                <p id="edit-tx-amount-error" className="text-xs text-error">
+                  {errors.amount}
+                </p>
+              )}
+            </div>
+          </div>
+
+          <div className="space-y-1">
+            <label
+              htmlFor="edit-tx-description"
+              className="text-xs font-semibold text-text-secondary flex items-center gap-1.5"
+            >
+              <FileText className="w-3.5 h-3.5" aria-hidden="true" /> Descrição
+            </label>
+            <input
+              id="edit-tx-description"
+              type="text"
+              value={form.description}
+              aria-invalid={!!errors.description}
+              aria-describedby={
+                errors.description ? 'edit-tx-description-error' : 'edit-tx-description-hint'
               }
+              onChange={(e) => set('description', e.target.value)}
+              placeholder="Descrição da transação"
+              maxLength={255}
+              className={inputClass}
+            />
+            {errors.description ? (
+              <p id="edit-tx-description-error" className="text-xs text-error">
+                {errors.description}
+              </p>
+            ) : (
+              <p id="edit-tx-description-hint" className="text-xs text-text-muted">
+                {form.description.length}/255
+              </p>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <label
+                htmlFor="edit-tx-date"
+                className="text-xs font-semibold text-text-secondary flex items-center gap-1.5"
+              >
+                <Calendar className="w-3.5 h-3.5" aria-hidden="true" /> Data da Transação
+              </label>
+              <input
+                id="edit-tx-date"
+                type="date"
+                value={form.date}
+                aria-invalid={!!errors.date}
+                aria-describedby={errors.date ? 'edit-tx-date-error' : undefined}
+                onChange={(e) => set('date', e.target.value)}
+                className={inputClass}
+              />
+              {errors.date && (
+                <p id="edit-tx-date-error" className="text-xs text-error">
+                  {errors.date}
+                </p>
+              )}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <label className="text-xs font-semibold text-text-secondary flex items-center gap-1.5">
-                  <Calendar className="w-3.5 h-3.5" /> Data da Transação
-                </label>
-                <input
-                  type="date"
-                  value={form.date}
-                  onChange={(e) => set('date', e.target.value)}
-                  className={inputClass}
-                />
-                {errors.date && <p className="text-xs text-error">{errors.date}</p>}
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-xs font-semibold text-text-secondary flex items-center gap-1.5">
-                  <DollarSign className="w-3.5 h-3.5" /> Banco <span className="text-text-muted font-normal">(opcional)</span>
-                </label>
-                <select
-                  value={form.banco}
-                  onChange={(e) => set('banco', e.target.value)}
-                  className={`${inputClass} appearance-none`}
-                >
-                  <option value="">— None —</option>
-                  {BANKS.map(b => <option key={b} value={b}>{b}</option>)}
-                </select>
-              </div>
+            <div className="space-y-1">
+              <label
+                htmlFor="edit-tx-bank"
+                className="text-xs font-semibold text-text-secondary flex items-center gap-1.5"
+              >
+                <DollarSign className="w-3.5 h-3.5" aria-hidden="true" /> Banco{' '}
+                <span className="text-text-muted font-normal">(opcional)</span>
+              </label>
+              <select
+                id="edit-tx-bank"
+                value={form.banco}
+                onChange={(e) => set('banco', e.target.value)}
+                className={`${inputClass} appearance-none`}
+              >
+                <option value="">— Nenhum —</option>
+                {BANKS.map((b) => (
+                  <option key={b} value={b}>
+                    {b}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
         </form>
-
-        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-border-default bg-bg-surface rounded-b-2xl">
-          <button
-            type="button"
-            onClick={handleClose}
-            className="px-4 py-2 text-sm font-semibold text-text-secondary bg-bg-card border border-border-default rounded-lg hover:bg-bg-elevated transition-colors"
-          >
-            Cancelar
-          </button>
-          <button
-            type="submit"
-            form="edit-tx-form"
-            className="px-5 py-2 text-sm font-semibold text-text-inverse bg-primary hover:bg-primary-hover rounded-lg transition-colors shadow-sm"
-          >
-            Salvar Alterações
-          </button>
-        </div>
-      </div>
+      </Dialog>
 
       {showUnsavedWarning && (
-        <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-bg-overlay">
-          <div className="bg-bg-modal rounded-2xl shadow-xl border border-border-default max-w-sm w-full p-6 space-y-4">
-            <h3 className="text-base font-bold text-text-primary">Descartar alterações?</h3>
-            <p className="text-sm text-text-secondary">Você tem alterações não salvas. Tem certeza que deseja fechar sem salvar?</p>
-            <div className="flex justify-end gap-3">
+        <Dialog
+          isOpen
+          onClose={() => setShowUnsavedWarning(false)}
+          title="Descartar alterações?"
+          description="Você tem alterações não salvas. Tem certeza que deseja fechar sem salvar?"
+          maxWidthClass="max-w-sm"
+          footer={
+            <>
               <button
+                type="button"
                 onClick={() => setShowUnsavedWarning(false)}
                 className="px-4 py-2 text-sm font-semibold text-text-secondary bg-bg-card border border-border-default rounded-lg hover:bg-bg-elevated transition-colors"
               >
                 Continuar Editando
               </button>
               <button
+                type="button"
                 onClick={onClose}
                 className="px-4 py-2 text-sm font-semibold text-text-inverse bg-error hover:bg-error-hover rounded-lg transition-colors"
               >
                 Descartar
               </button>
-            </div>
-          </div>
-        </div>
+            </>
+          }
+        >
+          <p className="text-sm text-text-secondary">
+            As modificações feitas neste formulário serão perdidas.
+          </p>
+        </Dialog>
       )}
-    </div>
+    </>
   );
 };
 
 const StatementPage = () => {
   const { transactions, deleteTransaction, updateTransaction, getCategories } = useBudget();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState('All');
-  const [dateRange, setDateRange] = useState({ start: '', end: '' });
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 15;
-  const [showActionButtons, setShowActionButtons] = useState(() =>
-    localStorage.getItem('statement.showActionsColumn') !== 'false'
-  );
-  const selectAllRef = useRef<HTMLInputElement>(null);
+  const {
+    period,
+    activeMonths,
+    periodLabel,
+    globalQuery,
+    searchParams,
+    setSearchParams,
+  } = usePortalUrlState();
 
+  // Derive table filter, sort, and pagination state from URL search params (§3.1, §8)
+  const searchTerm = globalQuery;
+  const categoryFilter = searchParams.get('category') || 'All';
+  const startDate = searchParams.get('start') || '';
+  const endDate = searchParams.get('end') || '';
+  const sortField: StatementSortField =
+    (searchParams.get('sort') as StatementSortField) === 'amount' ||
+    (searchParams.get('sort') as StatementSortField) === 'category'
+      ? (searchParams.get('sort') as StatementSortField)
+      : 'date';
+  const sortDirection: SortDirection =
+    searchParams.get('dir') === 'asc' ? 'asc' : 'desc';
+  const rawPage = Number.parseInt(searchParams.get('page') || '1', 10);
+  const currentPage = Number.isFinite(rawPage) && rawPage >= 1 ? rawPage : 1;
+
+  const itemsPerPage = 15;
+  const [showActionButtons, setShowActionButtons] = useState(
+    () => window.localStorage.getItem('statement.showActionsColumn') !== 'false'
+  );
+  const [density, setDensity] = useState<TableDensity>(() => {
+    const saved = window.localStorage.getItem(DENSITY_STORAGE_KEY);
+    return saved === 'compact' ? 'compact' : 'comfortable';
+  });
+  const [liveAnnouncement, setLiveAnnouncement] = useState('');
+
+  const selectAllRef = useRef<HTMLInputElement>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [selectedTransactionIds, setSelectedTransactionIds] = useState<string[]>([]);
@@ -259,38 +387,126 @@ const StatementPage = () => {
   const categoryList = useMemo(() => getCategories(), [getCategories]);
   const categories = useMemo(() => ['All', ...categoryList], [categoryList]);
 
-  const setFilter = <K extends keyof typeof dateRange>(key: K, value: string) => {
-    setDateRange(prev => ({ ...prev, [key]: value }));
-    setCurrentPage(1);
+  const updateUrlParams = (updates: Record<string, string | null>) => {
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        for (const [k, v] of Object.entries(updates)) {
+          if (v === null || v === '') {
+            next.delete(k);
+          } else {
+            next.set(k, v);
+          }
+        }
+        return next;
+      },
+      { replace: true }
+    );
   };
 
   const handleSearchChange = (value: string) => {
-    setSearchTerm(value);
-    setCurrentPage(1);
+    updateUrlParams({ q: value || null, page: null });
   };
 
   const handleCategoryFilterChange = (value: string) => {
-    setCategoryFilter(value);
-    setCurrentPage(1);
+    updateUrlParams({
+      category: value === 'All' ? null : value,
+      page: null,
+    });
+  };
+
+  const setDateFilter = (key: 'start' | 'end', value: string) => {
+    updateUrlParams({ [key]: value || null, page: null });
+  };
+
+  const handleSort = (field: StatementSortField) => {
+    const nextDir: SortDirection =
+      sortField === field ? (sortDirection === 'asc' ? 'desc' : 'asc') : 'desc';
+    updateUrlParams({
+      sort: field === 'date' ? null : field,
+      dir: nextDir === 'desc' ? null : nextDir,
+    });
+  };
+
+  const setPage = (page: number) => {
+    updateUrlParams({ page: page <= 1 ? null : String(page) });
+  };
+
+  const handleDensityChange = (next: TableDensity) => {
+    setDensity(next);
+    window.localStorage.setItem(DENSITY_STORAGE_KEY, next);
   };
 
   const filteredTransactions = useMemo(() => {
-    return transactions.filter(tx => {
-      const matchesSearch =
-        (tx.descricao ?? '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-        tx.categoria.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesCategory = categoryFilter === 'All' || tx.categoria === categoryFilter;
-      const matchesDate =
-        (!dateRange.start || tx.data >= dateRange.start) &&
-        (!dateRange.end || tx.data <= dateRange.end);
-      return matchesSearch && matchesCategory && matchesDate;
-    }).sort((a, b) => b.data.localeCompare(a.data));
-  }, [transactions, searchTerm, categoryFilter, dateRange]);
+    const query = searchTerm.toLowerCase();
+    return transactions
+      .filter((tx) => {
+        const matchesSearch =
+          !query ||
+          (tx.descricao ?? '').toLowerCase().includes(query) ||
+          tx.categoria.toLowerCase().includes(query) ||
+          (tx.banco ?? '').toLowerCase().includes(query);
+        const matchesCategory =
+          categoryFilter === 'All' || tx.categoria === categoryFilter;
+        const matchesDate =
+          (!startDate || tx.data >= startDate) && (!endDate || tx.data <= endDate);
 
-  const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage);
+        let matchesPeriod = true;
+        if (period !== 'YEAR') {
+          const parsed = parseISODateParts(tx.data);
+          const effectiveMonth = parsed?.month ?? tx.mes;
+          matchesPeriod = activeMonths.includes(effectiveMonth);
+        }
+
+        return matchesSearch && matchesCategory && matchesDate && matchesPeriod;
+      })
+      .sort((a, b) => {
+        let cmp: number;
+        if (sortField === 'date') {
+          cmp = a.data.localeCompare(b.data);
+        } else if (sortField === 'category') {
+          cmp = a.categoria.localeCompare(b.categoria, 'pt-BR');
+        } else {
+          cmp = majorToMinor(a.valor) - majorToMinor(b.valor);
+        }
+        return sortDirection === 'asc' ? cmp : -cmp;
+      });
+  }, [
+    transactions,
+    searchTerm,
+    categoryFilter,
+    startDate,
+    endDate,
+    period,
+    activeMonths,
+    sortField,
+    sortDirection,
+  ]);
+
+  // Integer minor-unit summary across filtered transactions for table footer reconciliation (§5.7, §8)
+  const filteredTotals = useMemo(() => {
+    let incomeMinor = 0;
+    let expenseMinor = 0;
+    for (const tx of filteredTransactions) {
+      const minor = majorToMinor(tx.valor);
+      if (minor >= 0) {
+        incomeMinor += minor;
+      } else {
+        expenseMinor += minor;
+      }
+    }
+    return {
+      income: minorToMajor(incomeMinor),
+      expenses: minorToMajor(expenseMinor),
+      net: minorToMajor(incomeMinor + expenseMinor),
+    };
+  }, [filteredTransactions]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredTransactions.length / itemsPerPage));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
   const paginatedTransactions = filteredTransactions.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
+    (safeCurrentPage - 1) * itemsPerPage,
+    safeCurrentPage * itemsPerPage
   );
 
   useEffect(() => {
@@ -302,73 +518,27 @@ const StatementPage = () => {
   }, [selectedTransactionIds, paginatedTransactions]);
 
   const exportCSV = () => {
-    const header = 'Date,Category,Description,Amount,Bank';
-    const rows = filteredTransactions.map(tx =>
-      `${tx.data},"${tx.categoria}","${tx.descricao ?? ''}",${tx.valor},"${tx.banco ?? ''}"`
-    );
-    const blob = new Blob(['\uFEFF' + [header, ...rows].join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const csvContent = buildSanitizedStatementCsv(filteredTransactions);
+    const blob = new Blob([csvContent], {
+      type: 'text/csv;charset=utf-8;',
+    });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
     a.download = 'statement.csv';
     a.click();
     URL.revokeObjectURL(url);
+    setLiveAnnouncement(
+      `Exportação CSV concluída com ${filteredTransactions.length} transações.`
+    );
   };
 
   const exportPDF = () => {
-    let tableHTML = `
-      <html>
-      <head>
-        <title>Bank Statement</title>
-        <style>
-          body { font-family: Arial, sans-serif; padding: 20px; }
-          h1 { color: #1e293b; margin-bottom: 10px; }
-          .date-range { color: #64748b; margin-bottom: 20px; }
-          table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-          th { background: #f1f5f9; padding: 10px; text-align: left; border-bottom: 2px solid #e2e8f0; }
-          td { padding: 10px; border-bottom: 1px solid #e2e8f0; }
-          .amount-positive { color: #16a34a; }
-          .amount-negative { color: #dc2626; }
-          .category-badge { padding: 2px 8px; border-radius: 4px; font-size: 12px; }
-        </style>
-      </head>
-      <body>
-        <h1>Bank Statement</h1>
-        <p class="date-range">Generated on ${new Date().toLocaleDateString()}</p>
-        <table>
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th>Category</th>
-              <th>Description</th>
-              <th style="text-align: right;">Amount</th>
-              <th>Bank</th>
-            </tr>
-          </thead>
-          <tbody>
-    `;
-    
-    filteredTransactions.forEach(tx => {
-      const amountClass = tx.valor >= 0 ? 'amount-positive' : 'amount-negative';
-      const amountPrefix = tx.valor >= 0 ? '+' : '';
-      tableHTML += `
-        <tr>
-          <td>${tx.data}</td>
-          <td><span class="category-badge">${tx.categoria}</span></td>
-          <td>${tx.descricao ?? '-'}</td>
-          <td class="${amountClass}" style="text-align: right;">${amountPrefix}${formatBRL(tx.valor)}</td>
-          <td>${tx.banco ?? '-'}</td>
-        </tr>
-      `;
-    });
-    
-    tableHTML += `
-          </tbody>
-        </table>
-      </body>
-      </html>
-    `;
-    
+    const tableHTML = buildSanitizedStatementPrintHtml(
+      filteredTransactions,
+      new Date().toLocaleDateString('pt-BR')
+    );
+
     const printWindow = window.open('', '_blank');
     if (printWindow) {
       printWindow.document.write(tableHTML);
@@ -377,19 +547,20 @@ const StatementPage = () => {
         printWindow.print();
       };
     }
+    setLiveAnnouncement('Documento PDF preparado para impressão.');
   };
 
   const handleCheckboxChange = (id: string, checked: boolean) => {
     if (checked) {
-      setSelectedTransactionIds(prev => [...prev, id]);
+      setSelectedTransactionIds((prev) => [...prev, id]);
     } else {
-      setSelectedTransactionIds(prev => prev.filter(tid => tid !== id));
+      setSelectedTransactionIds((prev) => prev.filter((tid) => tid !== id));
     }
   };
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedTransactionIds(paginatedTransactions.map(tx => tx.id));
+      setSelectedTransactionIds(paginatedTransactions.map((tx) => tx.id));
     } else {
       setSelectedTransactionIds([]);
     }
@@ -425,47 +596,81 @@ const StatementPage = () => {
   };
 
   const handleConfirmDelete = () => {
-    deleteTransactionIds.forEach(id => {
+    const count = deleteTransactionIds.length;
+    deleteTransactionIds.forEach((id) => {
       deleteTransaction(id);
     });
     handleCloseDeleteModal();
     setSelectedTransactionIds([]);
+    setLiveAnnouncement(
+      count === 1
+        ? '1 transação excluída com sucesso.'
+        : `${count} transações excluídas com sucesso.`
+    );
   };
+
+  const getAriaSort = (
+    field: StatementSortField
+  ): 'ascending' | 'descending' | 'none' => {
+    if (sortField !== field) return 'none';
+    return sortDirection === 'asc' ? 'ascending' : 'descending';
+  };
+
+  const cellPadding = density === 'compact' ? 'py-2 px-4' : 'py-3 px-4';
 
   return (
     <div className="max-w-7xl mx-auto space-y-8 pb-12">
+      {/* Screen-reader live region for async/mutation announcements (§9) */}
+      <div role="status" aria-live="polite" className="sr-only">
+        {liveAnnouncement}
+      </div>
+
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-4xl font-extrabold text-text-primary tracking-tight">Extrato</h1>
-          <p className="text-text-secondary text-lg mt-2">Registro cronológico detalhado de todos os movimentos financeiros.</p>
+          <div className="flex flex-wrap items-center gap-3">
+            <h1 className="text-4xl font-extrabold text-text-primary tracking-tight">
+              Extrato
+            </h1>
+            <span className="px-3 py-1 text-xs font-semibold rounded-full bg-primary-light text-primary border border-primary/20">
+              {periodLabel}
+            </span>
+          </div>
+          <p className="text-text-secondary text-lg mt-2">
+            Registro cronológico detalhado de todos os movimentos financeiros.
+          </p>
         </div>
-        <div className="flex items-center gap-2">
+
+        <div className="flex flex-wrap items-center gap-2">
           <button
+            type="button"
             onClick={() => setIsAddModalOpen(true)}
             className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary-hover text-text-inverse rounded-xl transition-colors text-sm font-semibold shadow-sm"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-4 h-4" aria-hidden="true" />
             Adicionar Transação
           </button>
           <button
+            type="button"
             onClick={() => setIsImportModalOpen(true)}
             className="flex items-center gap-2 px-4 py-2 bg-bg-card border border-border-default text-text-secondary rounded-xl hover:bg-bg-elevated transition-colors text-sm font-semibold shadow-sm"
           >
-            <UploadCloud className="w-4 h-4" />
+            <UploadCloud className="w-4 h-4" aria-hidden="true" />
             Importar
           </button>
           <button
+            type="button"
             onClick={exportCSV}
             className="flex items-center gap-2 px-4 py-2 bg-bg-card border border-border-default text-text-secondary rounded-xl hover:bg-bg-elevated transition-colors text-sm font-semibold shadow-sm"
           >
-            <FileText className="w-4 h-4" />
+            <FileText className="w-4 h-4" aria-hidden="true" />
             Exportar CSV
           </button>
           <button
+            type="button"
             onClick={exportPDF}
             className="flex items-center gap-2 px-4 py-2 bg-bg-card border border-border-default text-text-secondary rounded-xl hover:bg-bg-elevated transition-colors text-sm font-semibold shadow-sm"
           >
-            <File className="w-4 h-4" />
+            <File className="w-4 h-4" aria-hidden="true" />
             Exportar PDF
           </button>
         </div>
@@ -473,8 +678,12 @@ const StatementPage = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
         <div className="md:col-span-2 flex items-center gap-2 bg-bg-card border border-border-default rounded-xl px-3 focus-within:ring-2 focus-within:ring-focus-ring">
-          <Search className="w-4 h-4 text-text-muted flex-shrink-0" />
+          <Search className="w-4 h-4 text-text-muted flex-shrink-0" aria-hidden="true" />
+          <label htmlFor="statement-search-input" className="sr-only">
+            Pesquisar descrições ou categorias
+          </label>
           <input
+            id="statement-search-input"
             type="text"
             placeholder="Pesquisar descrições ou categorias..."
             className="flex-1 py-3 outline-none bg-transparent text-sm text-text-primary placeholder:text-text-placeholder"
@@ -482,76 +691,142 @@ const StatementPage = () => {
             onChange={(e) => handleSearchChange(e.target.value)}
           />
         </div>
+
         <div className="flex items-center gap-2 bg-bg-card border border-border-default rounded-xl px-3 focus-within:ring-2 focus-within:ring-focus-ring">
-          <Filter className="w-4 h-4 text-text-muted flex-shrink-0" />
+          <Filter className="w-4 h-4 text-text-muted flex-shrink-0" aria-hidden="true" />
+          <label htmlFor="statement-category-filter" className="sr-only">
+            Filtrar por categoria
+          </label>
           <select
-            className="flex-1 py-3 outline-none bg-transparent text-sm appearance-none text-text-primary"
+            id="statement-category-filter"
+            aria-label="Filtrar por categoria"
+            className="flex-1 py-3 outline-none bg-transparent text-sm appearance-none text-text-primary cursor-pointer"
             value={categoryFilter}
             onChange={(e) => handleCategoryFilterChange(e.target.value)}
           >
-            {categories.map(cat => (
-              <option key={cat} value={cat}>{cat}</option>
+            {categories.map((cat) => (
+              <option key={cat} value={cat}>
+                {cat === 'All' ? 'Todas as categorias' : cat}
+              </option>
             ))}
           </select>
         </div>
+
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-2 bg-bg-card border border-border-default rounded-xl px-3 focus-within:ring-2 focus-within:ring-focus-ring">
-            <Calendar className="w-4 h-4 text-text-muted flex-shrink-0" />
+            <Calendar className="w-4 h-4 text-text-muted flex-shrink-0" aria-hidden="true" />
+            <label htmlFor="statement-start-date" className="sr-only">
+              Data inicial
+            </label>
             <input
+              id="statement-start-date"
               type="date"
+              aria-label="Data inicial"
               className="flex-1 py-3 outline-none bg-transparent text-sm text-text-primary"
-              value={dateRange.start}
-              onChange={(e) => setFilter('start', e.target.value)}
+              value={startDate}
+              onChange={(e) => setDateFilter('start', e.target.value)}
             />
           </div>
           <div className="flex items-center gap-2 bg-bg-card border border-border-default rounded-xl px-3 focus-within:ring-2 focus-within:ring-focus-ring">
-            <Calendar className="w-4 h-4 text-text-muted flex-shrink-0" />
+            <Calendar className="w-4 h-4 text-text-muted flex-shrink-0" aria-hidden="true" />
+            <label htmlFor="statement-end-date" className="sr-only">
+              Data final
+            </label>
             <input
+              id="statement-end-date"
               type="date"
+              aria-label="Data final"
               className="flex-1 py-3 outline-none bg-transparent text-sm text-text-primary"
-              value={dateRange.end}
-              onChange={(e) => setFilter('end', e.target.value)}
+              value={endDate}
+              onChange={(e) => setDateFilter('end', e.target.value)}
             />
           </div>
         </div>
       </div>
 
-      <div className="flex items-center gap-3 mb-8">
-        <button
-          role="switch"
-          aria-checked={showActionButtons}
-          aria-label="Alternar visibilidade da coluna de ações"
-          onClick={() => {
-            const next = !showActionButtons;
-            setShowActionButtons(next);
-            localStorage.setItem('statement.showActionsColumn', String(next));
-          }}
-          className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-focus-ring focus:ring-offset-2 ${showActionButtons ? 'bg-primary' : 'bg-text-disabled'}`}
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            role="switch"
+            aria-checked={showActionButtons}
+            aria-label="Alternar visibilidade da coluna de ações"
+            onClick={() => {
+              const next = !showActionButtons;
+              setShowActionButtons(next);
+              window.localStorage.setItem('statement.showActionsColumn', String(next));
+            }}
+            className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-focus-ring focus:ring-offset-2 ${
+              showActionButtons ? 'bg-primary' : 'bg-text-disabled'
+            }`}
+          >
+            <span
+              aria-hidden="true"
+              className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition duration-200 ease-in-out ${
+                showActionButtons ? 'translate-x-4' : 'translate-x-0'
+              }`}
+            />
+          </button>
+          <span className="text-sm text-text-secondary select-none">
+            Mostrar Coluna de Ações
+          </span>
+        </div>
+
+        {/* Table Density Toggle (§6.2) */}
+        <div
+          role="group"
+          aria-label="Densidade da tabela"
+          className="inline-flex items-center bg-bg-card border border-border-default rounded-xl p-1 shadow-sm"
         >
-          <span
-            aria-hidden="true"
-            className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition duration-200 ease-in-out ${showActionButtons ? 'translate-x-4' : 'translate-x-0'}`}
-          />
-        </button>
-        <span className="text-sm text-text-secondary select-none">Mostrar Coluna de Ações</span>
+          <button
+            type="button"
+            onClick={() => handleDensityChange('comfortable')}
+            aria-pressed={density === 'comfortable'}
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+              density === 'comfortable'
+                ? 'bg-primary text-text-inverse'
+                : 'text-text-secondary hover:text-text-primary'
+            }`}
+          >
+            <Rows3 className="w-3.5 h-3.5" aria-hidden="true" />
+            <span>Confortável</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => handleDensityChange('compact')}
+            aria-pressed={density === 'compact'}
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+              density === 'compact'
+                ? 'bg-primary text-text-inverse'
+                : 'text-text-secondary hover:text-text-primary'
+            }`}
+          >
+            <Rows4 className="w-3.5 h-3.5" aria-hidden="true" />
+            <span>Compacta</span>
+          </button>
+        </div>
       </div>
 
       {selectedTransactionIds.length > 0 && (
         <div className="mb-4 p-4 bg-primary-light rounded-lg border border-primary/30">
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium text-text-primary">
-              {selectedTransactionIds.length} transação{selectedTransactionIds.length !== 1 ? 's' : ''} selecionada{selectedTransactionIds.length !== 1 ? 's' : ''}
+              {selectedTransactionIds.length} transação
+              {selectedTransactionIds.length !== 1 ? 'ões' : ''} selecionada
+              {selectedTransactionIds.length !== 1 ? 's' : ''}
             </span>
             <div className="flex gap-2">
               <button
+                type="button"
                 onClick={handleDeleteSelected}
                 className="px-3 py-1.5 text-sm font-medium bg-error-light hover:bg-error/20 text-error rounded"
               >
                 Excluir Selecionadas
               </button>
               <button
+                type="button"
                 onClick={handleClearSelection}
-                className="px-3 py-1.5 text-sm font-medium bg-bg-surface hover:bg-bg-elevated text-text-secondary rounded"
+                className="px-3 py-1.5 text-sm font-medium bg-bg-card hover:bg-bg-elevated text-text-secondary rounded"
               >
                 Limpar Seleção
               </button>
@@ -562,26 +837,87 @@ const StatementPage = () => {
 
       <div className="overflow-x-auto bg-bg-card rounded-2xl border border-border-default shadow-sm">
         <table className="w-full border-collapse text-sm min-w-[900px]">
-          <thead className="bg-bg-surface border-b border-border-default">
+          <caption className="sr-only">
+            Extrato de transações financeiras ({periodLabel})
+          </caption>
+          <thead className="bg-bg-elevated border-b border-border-default">
             <tr>
-              <th className="py-3 px-4 text-left font-semibold text-text-secondary uppercase tracking-wider text-xs w-8">
+              <th
+                scope="col"
+                className={`${cellPadding} text-left font-semibold text-text-secondary uppercase tracking-wider text-xs w-8`}
+              >
                 <input
                   ref={selectAllRef}
                   type="checkbox"
-                  checked={selectedTransactionIds.length === paginatedTransactions.length && paginatedTransactions.length > 0}
+                  checked={
+                    selectedTransactionIds.length === paginatedTransactions.length &&
+                    paginatedTransactions.length > 0
+                  }
                   onChange={(e) => handleSelectAll(e.target.checked)}
                   className="h-4 w-4 text-primary rounded focus:ring-focus-ring"
-                  aria-label="Selecionar todas as transações"
+                  aria-label="Selecionar todas as transações da página"
                 />
               </th>
-              <th className="py-3 px-4 text-left font-semibold text-text-secondary uppercase tracking-wider text-xs w-28">Data</th>
-              <th className="py-3 px-4 text-left font-semibold text-text-secondary uppercase tracking-wider text-xs w-44">Categoria</th>
-              <th className="py-3 px-4 text-left font-semibold text-text-secondary uppercase tracking-wider text-xs">Descrição</th>
-              <th className="py-3 px-4 text-right font-semibold text-text-secondary uppercase tracking-wider text-xs w-32">Valor</th>
-              <th className="py-3 px-4 text-left font-semibold text-text-secondary uppercase tracking-wider text-xs w-32">Banco</th>
+              <th
+                scope="col"
+                aria-sort={getAriaSort('date')}
+                className={`${cellPadding} text-left font-semibold text-text-secondary uppercase tracking-wider text-xs w-32`}
+              >
+                <button
+                  type="button"
+                  onClick={() => handleSort('date')}
+                  className="inline-flex items-center gap-1.5 hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring rounded"
+                >
+                  <span>Data</span>
+                  <ArrowUpDown className="w-3.5 h-3.5" aria-hidden="true" />
+                </button>
+              </th>
+              <th
+                scope="col"
+                aria-sort={getAriaSort('category')}
+                className={`${cellPadding} text-left font-semibold text-text-secondary uppercase tracking-wider text-xs w-44`}
+              >
+                <button
+                  type="button"
+                  onClick={() => handleSort('category')}
+                  className="inline-flex items-center gap-1.5 hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring rounded"
+                >
+                  <span>Categoria</span>
+                  <ArrowUpDown className="w-3.5 h-3.5" aria-hidden="true" />
+                </button>
+              </th>
+              <th
+                scope="col"
+                className={`${cellPadding} text-left font-semibold text-text-secondary uppercase tracking-wider text-xs`}
+              >
+                Descrição
+              </th>
+              <th
+                scope="col"
+                aria-sort={getAriaSort('amount')}
+                className={`${cellPadding} text-right font-semibold text-text-secondary uppercase tracking-wider text-xs w-36`}
+              >
+                <button
+                  type="button"
+                  onClick={() => handleSort('amount')}
+                  className="inline-flex items-center justify-end gap-1.5 hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring rounded ml-auto"
+                >
+                  <span>Valor</span>
+                  <ArrowUpDown className="w-3.5 h-3.5" aria-hidden="true" />
+                </button>
+              </th>
+              <th
+                scope="col"
+                className={`${cellPadding} text-left font-semibold text-text-secondary uppercase tracking-wider text-xs w-32`}
+              >
+                Banco
+              </th>
               {showActionButtons && (
-                <th className="py-3 px-4 text-left font-semibold text-text-secondary uppercase tracking-wider text-xs w-20">
-                  Actions
+                <th
+                  scope="col"
+                  className={`${cellPadding} text-left font-semibold text-text-secondary uppercase tracking-wider text-xs w-24`}
+                >
+                  Ações
                 </th>
               )}
             </tr>
@@ -590,42 +926,62 @@ const StatementPage = () => {
             {paginatedTransactions.length > 0 ? (
               paginatedTransactions.map((tx) => (
                 <tr key={tx.id} className="hover:bg-bg-elevated/30 transition-colors">
-                  <td className="py-3 px-4 text-left">
+                  <td className={`${cellPadding} text-left`}>
                     <input
                       type="checkbox"
                       checked={selectedTransactionIds.includes(tx.id)}
                       onChange={(e) => handleCheckboxChange(tx.id, e.target.checked)}
                       className="h-4 w-4 text-primary rounded focus:ring-focus-ring"
+                      aria-label={`Selecionar transação ${tx.descricao || tx.categoria} de ${tx.data}`}
                     />
                   </td>
-                  <td className="py-3 px-4 text-text-secondary font-medium tabular-nums">{tx.data}</td>
-                  <td className="py-3 px-4">
+                  <td
+                    className={`${cellPadding} text-text-secondary font-medium tabular-nums`}
+                  >
+                    {tx.data}
+                  </td>
+                  <td className={cellPadding}>
                     <CategoryBadge categoria={tx.categoria} />
                   </td>
-                  <td className="py-3 px-4 text-text-primary max-w-xs truncate" title={tx.descricao ?? ''}>{tx.descricao}</td>
-                  <td className={`py-3 px-4 text-right font-mono font-semibold tabular-nums ${tx.valor >= 0 ? 'text-success' : 'text-error'}`}>
-                    {formatBRL(tx.valor)}
+                  <td
+                    className={`${cellPadding} text-text-primary max-w-xs truncate`}
+                    title={tx.descricao ?? ''}
+                  >
+                    {tx.descricao}
                   </td>
-                  <td className={`py-3 px-4 text-sm font-semibold ${tx.banco ? bancoBadgeClass(tx.banco) : 'text-text-disabled'}`}>
+                  <td
+                    className={`${cellPadding} text-right font-mono font-semibold tabular-nums ${
+                      tx.valor >= 0 ? 'text-positive' : 'text-negative'
+                    }`}
+                  >
+                    <MoneyDisplay value={tx.valor} signDisplay="exceptZero" />
+                  </td>
+                  <td
+                    className={`${cellPadding} text-sm font-semibold ${
+                      tx.banco ? bancoBadgeClass(tx.banco) : 'text-text-disabled'
+                    }`}
+                  >
                     {tx.banco ?? '—'}
                   </td>
                   {showActionButtons && (
-                    <td className="py-3 px-4 text-left space-x-2">
+                    <td className={`${cellPadding} text-left space-x-2`}>
                       <button
+                        type="button"
                         onClick={() => handleOpenEditModal(tx.id)}
                         className="p-1.5 rounded hover:bg-bg-elevated transition-colors"
                         title="Editar transação"
-                        aria-label="Editar transação"
+                        aria-label={`Editar transação ${tx.descricao || tx.categoria}`}
                       >
-                        <Edit className="w-4 h-4 text-primary" />
+                        <Edit className="w-4 h-4 text-primary" aria-hidden="true" />
                       </button>
                       <button
+                        type="button"
                         onClick={() => handleOpenDeleteModal(tx.id)}
                         className="p-1.5 rounded hover:bg-bg-elevated transition-colors"
                         title="Excluir transação"
-                        aria-label="Excluir transação"
+                        aria-label={`Excluir transação ${tx.descricao || tx.categoria}`}
                       >
-                        <Trash2 className="w-4 h-4 text-error" />
+                        <Trash2 className="w-4 h-4 text-error" aria-hidden="true" />
                       </button>
                     </td>
                   )}
@@ -633,30 +989,61 @@ const StatementPage = () => {
               ))
             ) : (
               <tr>
-                <td colSpan={showActionButtons ? 7 : 6} className="py-12 text-center text-text-muted italic">
+                <td
+                  colSpan={showActionButtons ? 7 : 6}
+                  className="py-12 text-center text-text-muted italic"
+                >
                   Nenhuma transação encontrada com os filtros aplicados.
                 </td>
               </tr>
             )}
           </tbody>
+          {filteredTransactions.length > 0 && (
+            <tfoot>
+              <tr className="bg-bg-elevated/70 border-t-2 border-border-default font-bold">
+                <td colSpan={4} className={`${cellPadding} text-right text-xs uppercase tracking-wider text-text-secondary`}>
+                  Total Filtrado ({filteredTransactions.length} {filteredTransactions.length === 1 ? 'registro' : 'registros'}):
+                </td>
+                <td
+                  className={`${cellPadding} text-right font-mono tabular-nums text-xs ${
+                    filteredTotals.net >= 0 ? 'text-positive' : 'text-negative'
+                  }`}
+                >
+                  <MoneyDisplay value={filteredTotals.net} signDisplay="exceptZero" />
+                </td>
+                <td colSpan={showActionButtons ? 2 : 1} className={`${cellPadding} text-xs text-text-muted font-normal`}>
+                  <span className="text-positive font-semibold">
+                    +<MoneyDisplay value={filteredTotals.income} />
+                  </span>
+                  {' / '}
+                  <span className="text-negative font-semibold">
+                    <MoneyDisplay value={filteredTotals.expenses} />
+                  </span>
+                </td>
+              </tr>
+            </tfoot>
+          )}
         </table>
       </div>
 
       <div className="flex items-center justify-between px-4">
         <p className="text-sm text-text-muted">
-          Mostrando {paginatedTransactions.length} de {filteredTransactions.length} transações
+          Mostrando {paginatedTransactions.length} de {filteredTransactions.length}{' '}
+          transações (Página {safeCurrentPage} de {totalPages})
         </p>
         <div className="flex gap-2">
           <button
-            disabled={currentPage === 1}
-            onClick={() => setCurrentPage(prev => prev - 1)}
+            type="button"
+            disabled={safeCurrentPage <= 1}
+            onClick={() => setPage(safeCurrentPage - 1)}
             className="px-4 py-2 bg-bg-card border border-border-default rounded-lg text-sm font-medium disabled:opacity-50 hover:bg-bg-elevated transition-colors text-text-secondary"
           >
             Anterior
           </button>
           <button
-            disabled={currentPage === totalPages || totalPages === 0}
-            onClick={() => setCurrentPage(prev => prev + 1)}
+            type="button"
+            disabled={safeCurrentPage >= totalPages || filteredTransactions.length === 0}
+            onClick={() => setPage(safeCurrentPage + 1)}
             className="px-4 py-2 bg-bg-card border border-border-default rounded-lg text-sm font-medium disabled:opacity-50 hover:bg-bg-elevated transition-colors text-text-secondary"
           >
             Próximo
@@ -664,59 +1051,60 @@ const StatementPage = () => {
         </div>
       </div>
 
-      {isEditModalOpen && editTransactionId !== null && (() => {
-        const tx = transactions.find(t => t.id === editTransactionId);
-        if (!tx) return null;
-        return (
-          <EditTransactionModal
-            transaction={tx}
-            categories={getCategories()}
-            onSave={(id, patch) => { updateTransaction(id, patch); handleCloseEditModal(); }}
-            onClose={handleCloseEditModal}
-          />
-        );
-      })()}
+      {isEditModalOpen &&
+        editTransactionId !== null &&
+        (() => {
+          const tx = transactions.find((t) => t.id === editTransactionId);
+          if (!tx) return null;
+          return (
+            <EditTransactionModal
+              transaction={tx}
+              categories={getCategories()}
+              onSave={(id, patch) => {
+                updateTransaction(id, patch);
+                handleCloseEditModal();
+                setLiveAnnouncement('Transação atualizada com sucesso.');
+              }}
+              onClose={handleCloseEditModal}
+            />
+          );
+        })()}
 
-      {isDeleteModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-bg-overlay">
-          <div className="bg-bg-modal w-full max-w-md rounded-3xl shadow-xl border border-border-default">
-            <div className="p-6 space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-xl font-bold text-text-primary">
-                  {deleteTransactionIds.length === 1 ? 'Excluir Transação' : 'Excluir Transações'}
-                </h3>
-                <button onClick={handleCloseDeleteModal} className="p-2 hover:bg-bg-elevated rounded-full transition-colors text-text-muted hover:text-text-secondary">
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-              <div className="text-text-secondary">
-                {deleteTransactionIds.length === 1
-                  ? 'Tem certeza que deseja excluir esta transação?'
-                  : `Tem certeza que deseja excluir as ${deleteTransactionIds.length} transações selecionadas?`}
-              </div>
-              {deleteTransactionIds.length > 1 && (
-                <p className="mt-2 text-text-muted text-sm">
-                  Esta ação não pode ser desfeita.
-                </p>
-              )}
-              <div className="flex justify-end space-x-3">
-                <button
-                  onClick={handleCloseDeleteModal}
-                  className="px-4 py-2 bg-bg-surface hover:bg-bg-elevated text-text-secondary rounded"
-                >
-                  Cancelar
-                </button>
-                <button
-                  onClick={handleConfirmDelete}
-                  className="px-4 py-2 bg-error hover:bg-error-hover text-text-inverse rounded"
-                >
-                  {deleteTransactionIds.length === 1 ? 'Excluir' : 'Excluir Todas'}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <Dialog
+        isOpen={isDeleteModalOpen}
+        onClose={handleCloseDeleteModal}
+        title={
+          deleteTransactionIds.length === 1
+            ? 'Excluir Transação'
+            : 'Excluir Transações'
+        }
+        description="Esta ação não pode ser desfeita."
+        maxWidthClass="max-w-md"
+        footer={
+          <>
+            <button
+              type="button"
+              onClick={handleCloseDeleteModal}
+              className="px-4 py-2 bg-bg-card border border-border-default hover:bg-bg-elevated text-text-secondary rounded-lg text-sm font-semibold"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={handleConfirmDelete}
+              className="px-4 py-2 bg-error hover:bg-error-hover text-text-inverse rounded-lg text-sm font-semibold"
+            >
+              {deleteTransactionIds.length === 1 ? 'Excluir' : 'Excluir Todas'}
+            </button>
+          </>
+        }
+      >
+        <p className="text-sm text-text-secondary">
+          {deleteTransactionIds.length === 1
+            ? 'Tem certeza que deseja excluir esta transação?'
+            : `Tem certeza que deseja excluir as ${deleteTransactionIds.length} transações selecionadas?`}
+        </p>
+      </Dialog>
 
       <AddTransactionModal
         isOpen={isAddModalOpen}

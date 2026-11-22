@@ -269,7 +269,7 @@ export function getCategoryStyle(categoria: string): CategoryStyle {
   for (let i = 0; i < normalized.length; i++) {
     hash = (hash * 31 + normalized.charCodeAt(i)) >>> 0;
   }
-  return FALLBACK_PALETTE[hash % FALLBACK_PALETTE.length];
+  return FALLBACK_PALETTE[hash % FALLBACK_PALETTE.length] ?? UNKNOWN_STYLE;
 }
 
 export const CATEGORY_NAMES = Object.keys(ALL_STYLES);

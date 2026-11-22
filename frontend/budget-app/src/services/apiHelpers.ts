@@ -67,9 +67,8 @@ export function getMonthFromDate(dateStr: string): Month {
   // Prefer ISO string extraction to avoid timezone shifts from new Date()
   if (/^\d{4}-\d{2}-\d{2}/.test(dateStr)) {
     const monthIndex = parseInt(dateStr.slice(5, 7), 10) - 1;
-    return ENGLISH_TO_PORTUGUESE_MONTH[
-      ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][monthIndex]
-    ] || 'Jan';
+    const englishKey = (['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'] as const)[monthIndex];
+    return (englishKey ? ENGLISH_TO_PORTUGUESE_MONTH[englishKey] : undefined) || 'Jan';
   }
   // Fallback for non-ISO dates
   const date = new Date(dateStr);
