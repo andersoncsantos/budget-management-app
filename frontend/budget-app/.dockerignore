@@ -1,0 +1,29 @@
+# Dependencies
+node_modules
+
+# Build output
+dist
+dist-ssr
+
+# Logs
+logs
+*.log
+
+# Editor
+.vscode
+.idea
+*.sw?
+.DS_Store
+
+# Env files
+.env
+*.local
+
+# Docker
+Dockerfile
+.dockerignore
+
+# Docs
+docs
+README.md
+AUDIT_REPORT.md

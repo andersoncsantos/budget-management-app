@@ -1,0 +1,68 @@
+@import "tailwindcss";
+@import "./styles/tokens.css";
+
+@theme {
+  --color-bg-app: var(--color-bg-app);
+  --color-bg-sidebar: var(--color-bg-sidebar);
+  --color-bg-header: var(--color-bg-header);
+  --color-bg-card: var(--color-bg-card);
+  --color-bg-table: var(--color-bg-table);
+  --color-bg-input: var(--color-bg-input);
+  --color-bg-elevated: var(--color-bg-elevated);
+  --color-bg-tooltip: var(--color-bg-tooltip);
+  --color-bg-modal: var(--color-bg-modal);
+  --color-bg-overlay: var(--color-bg-overlay);
+  --color-bg-success: var(--color-bg-success);
+  --color-bg-warning: var(--color-bg-warning);
+  --color-bg-error: var(--color-bg-error);
+
+  --color-text-primary: var(--color-text-primary);
+  --color-text-secondary: var(--color-text-secondary);
+  --color-text-muted: var(--color-text-muted);
+  --color-text-disabled: var(--color-text-disabled);
+  --color-text-placeholder: var(--color-text-placeholder);
+  --color-text-inverse: var(--color-text-inverse);
+
+  --color-border-default: var(--color-border-default);
+  --color-border-subtle: var(--color-border-subtle);
+  --color-border-hover: var(--color-border-hover);
+  --color-border-focus: var(--color-border-focus);
+
+  --color-primary: var(--color-primary);
+  --color-primary-hover: var(--color-primary-hover);
+  --color-primary-light: var(--color-primary-light);
+  --color-secondary: var(--color-secondary);
+  --color-success: var(--color-success);
+  --color-success-light: var(--color-success-light);
+  --color-warning: var(--color-warning);
+  --color-warning-light: var(--color-warning-light);
+  --color-error: var(--color-error);
+  --color-error-light: var(--color-error-light);
+  --color-info: var(--color-info);
+
+  --color-focus-ring: var(--color-focus-ring);
+
+  /* Legacy aliases for backward compat during migration */
+  --color-bg-main: var(--color-bg-app);
+  --color-bg-surface: var(--color-bg-card);
+  --color-text-main: var(--color-text-primary);
+  --color-border: var(--color-border-default);
+  --color-danger: var(--color-error);
+
+  --shadow-sm: var(--shadow-sm);
+  --shadow-md: var(--shadow-md);
+  --shadow-lg: var(--shadow-lg);
+  --shadow-xl: var(--shadow-xl);
+  --shadow-primary: var(--shadow-primary);
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
+  --radius-2xl: var(--radius-2xl);
+}
+
+body {
+  background-color: var(--color-bg-app);
+  color: var(--color-text-primary);
+  font-family: 'Inter', system-ui, sans-serif;
+}

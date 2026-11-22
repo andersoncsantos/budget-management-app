@@ -1,0 +1,16 @@
+# Dependencies & Build Artifacts
+/node_modules
+/build
+/dist
+/target
+
+# Operating System / Editor Files
+.DS_Store
+*.swp
+*.~
+.idea/
+.vscode/
+
+# Logs and Temp Files
+logs/
+tmp/

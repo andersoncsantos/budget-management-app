@@ -1,0 +1,265 @@
+Date,Category,Description,Amount,Bank
+2026-01-02,Receita,COR JSCP ITUB4,"R$ 0,15",Itaú
+2026-01-03,Tarifas Bancárias,Encargos Limite de Cred,"-R$ 0,05",Bradesco
+2026-01-03,Tarifas Bancárias,Iof S/ Utilizacao Limite,"-R$ 0,01",Bradesco
+2026-01-05,Farmácia,PIX QRS ULTRAFARMA 03/01,"-R$ 36,85",Itaú
+2026-01-05,Tom Penha,PAG BOLETO GARANTE SAO PAULO COBR GAR LT,"-R$ 570,72",Itaú
+2026-01-05,Farmácia,PIX QRS ULTRAFARMA 03/01,"-R$ 74,40",Itaú
+2026-01-05,Contas (Casa Erm.),PAG BOLETO ENEL DISTRIBUICAO SAO PAULO,"-R$ 285,54",Itaú
+2026-01-05,Gastos Extras,Pagamento Bilhete Único (São Paulo),"-R$ 250,00",Mercado Pago
+2026-01-05,Tarifas Bancárias,Encargos Limite de Cred,"-R$ 0,49",Bradesco
+2026-01-05,Tarifas Bancárias,Iof S/ Utilizacao Limite,"-R$ 0,49",Bradesco
+2026-01-07,Tarifas Bancárias,Seg Mais Prot,"-R$ 2,86",Bradesco
+2026-01-08,Alimentação,Compra no débito HIROTA OFFICE CEIC ITA,"-R$ 9,06",Nubank
+2026-01-10,Receita,Dinheiro Contas Mãe,"R$ 820,00",
+2026-01-12,Cartão de Crédito,FATURA PAGA ITAU UNICLAS,"-R$ 1.874,35",Itaú
+2026-01-12,Contas (Casa Erm.),PIX QRS SABESP12/01,"-R$ 154,59",Itaú
+2026-01-12,Contas,PIX QRS TIM S A12/01,"-R$ 100,30",Itaú
+2026-01-12,Investimentos,Capitalizacao,"-R$ 113,79",Bradesco
+2026-01-13,Receita,Dinheiro IPVA Sr. Márcio,"R$ 900,00",
+2026-01-14,Receita,COR RENDIMENTO KNCR11,"R$ 5,20",Itaú
+2026-01-14,Alimentação,Compra no débito HIROTA OFFICE CEIC ITA,"-R$ 12,56",Nubank
+2026-01-15,Receita,COR RENDIMENTO TRXF11,"R$ 4,00",Itaú
+2026-01-15,Alimentação,Compra no débito HIROTA OFFICE CEIC ITA,"-R$ 26,96",Nubank
+2026-01-16,Alimentação,Compra no débito LimaESilvaGas,"-R$ 18,00",Nubank
+2026-01-16,Tom Penha,Debito Prestacao Hab,"-R$ 199,47",Caixa
+2026-01-19,Cartão de Crédito,PAG BOLETO BANCO BRADESCARD S A,"-R$ 169,56",Itaú
+2026-01-19,Cartão de Crédito,FATURA PAGA ITI ITAU PLA,"-R$ 30,00",Itaú
+2026-01-19,Cartão de Crédito,Pagamento de fatura,"-R$ 486,93",Nubank
+2026-01-19,Cartão de Crédito,Pagamento Cartão de crédito,"-R$ 287,92",Mercado Pago
+2026-01-19,Contas (Casa Erm.),Pagamento com QR Pix TELEFONICA BRASIL S.A.,"-R$ 128,01",Mercado Pago
+2026-01-19,Contas (Casa Erm.),Pagamento com QR Pix TELEFONICA BRASIL S.A.,"-R$ 210,00",Mercado Pago
+2026-01-19,Contas,Pagamento com QR Pix Claro,"-R$ 202,67",Mercado Pago
+2026-01-19,Gastos Extras,Pagamento com QR Pix SAO PAULO TRANSPORTE S.A.,"-R$ 53,10",Mercado Pago
+2026-01-20,Cartão de Crédito,FATURA PAGA ITAU PLATINU,"-R$ 273,91",Itaú
+2026-01-20,Cartão de Crédito,PAGAMENTO DE FATURA PICPAY CARD,"-R$ 807,73",PicPay
+2026-01-21,Alimentação,Compra no débito HIROTA OFFICE CEIC ITA,"-R$ 2,98",Nubank
+2026-01-23,Receita,COR RENDIMENTO BTLG11,"R$ 5,53",Itaú
+2026-01-23,Receita,COR RENDIMENTO XPML11,"R$ 4,60",Itaú
+2026-01-26,Gastos Extras,INT LICENC SP 75077368,"-R$ 174,08",Itaú
+2026-01-26,Alimentação,Compra no débito MINIMERCADO LARISSA E,"-R$ 11,49",Nubank
+2026-01-27,Tom Penha,PAG BOLETO GARANTE SAO PAULO COBR GAR LT,"-R$ 485,23",Itaú
+2026-01-27,Contas,PIX QRS ENEL DISTRI27/01,"-R$ 206,70",Itaú
+2026-01-27,Receita,FOLHA PAGAMENTO MENSAL,"R$ 7.309,58",Itaú
+2026-01-27,Tom Penha,Pag Boleto IBC,"-R$ 1.260,00",Caixa
+2026-02-02,Receita,COR JSCP ITUB4,"R$ 0,15",Itaú
+2026-02-03,Tarifas Bancárias,Encargos Limite de Cred,"-R$ 0,06",Bradesco
+2026-02-05,Receita,Reembolso Compra de 2 produtos,"R$ 221,00",Mercado Pago
+2026-02-07,Receita,Dinheiro Contas Mãe,"R$ 850,00",
+2026-02-07,Alimentação,Compra no débito MINIMERCADO LARISSA E,"-R$ 14,37",Nubank
+2026-02-08,Farmácia,Compra no débito - DROGASIL3673,"-R$ 48,49",Nubank
+2026-02-08,Gastos Extras,Transferência enviada pelo Pix - ZAPIZI - 40.056.457/0001-32 - EFÍ S.A. - IP (0364) Agência: 1 Conta: 543762-8,"-R$ 10,00",Nubank
+2026-02-08,Receita,Reembolso recebido pelo Pix - ZAPIZI LTDA - 40.056.457/0001-32 - EFÍ S.A. - IP (0364) Agência: 1 Conta: 543762-8,"R$ 10,00",Nubank
+2026-02-09,Contas (Casa Erm.),Pagamento com QR Pix ELETROPAULO METROPOLITANA ELETRICIDADE DE SAO PAULO S.A.,"-R$ 303,19",Mercado Pago
+2026-02-09,Compras,Amazon Servicos de Varejo do Brasil LTDA.,"-R$ 226,00",Mercado Pago
+2026-02-09,Tarifas Bancárias,Seg Mais Prot,"-R$ 2,86",Bradesco
+2026-02-10,Contas (Casa Erm.),Pagamento com QR Pix COMPANHIA DE SANEAMENTO BASICO DO ESTADO DE SAO PAULO - SABES...,"-R$ 162,49",Mercado Pago
+2026-02-10,Contas,Pagamento com QR Pix TIM S A,"-R$ 150,27",Mercado Pago
+2026-02-10,Investimentos,Capitalizacao,"-R$ 113,79",Bradesco
+2026-02-11,Alimentação,Compra no débito - HIROTA OFFICE CEIC ITA,"-R$ 7,76",Nubank
+2026-02-11,Cartão de Crédito,FATURA PAGA ITAU UNICLAS,"-R$ 1.298,70",Itaú
+2026-02-12,Receita,Transferência de saldo NuInvest,"R$ 1,20",Nubank
+2026-02-12,Alimentação,Compra no débito - LimaESilvaGas,"-R$ 16,00",Nubank
+2026-02-12,Receita,COR RENDIMENTO KNCR11,"R$ 4,80",Itaú
+2026-02-13,Receita,COR RENDIMENTO TRXF11,"R$ 3,72",Itaú
+2026-02-14,Alimentação,Compra no débito - MINIMERCADO LARISSA E,"-R$ 30,28",Nubank
+2026-02-14,Compras,Pix enviado LG ELECTRONICS DO BRASIL LTDA,"-R$ 4.616,15",Mercado Pago
+2026-02-14,Contas,Pagamento com QR Pix Claro,"-R$ 202,67",Mercado Pago
+2026-02-16,Cartão de Crédito,Pagamento Cartão de crédito,"-R$ 295,90",Mercado Pago
+2026-02-17,Receita,Máquina Wahl,"R$ 200,00",
+2026-02-18,Gastos Extras,Compra no débito - LUCIANODEOLIVEIRA,"-R$ 20,00",Nubank
+2026-02-18,Contas (Casa Erm.),Pagamento com QR Pix TELEFONICA BRASIL S.A.,"-R$ 128,01",Mercado Pago
+2026-02-18,Contas (Casa Erm.),Pagamento com QR Pix TELEFONICA BRASIL S.A.,"-R$ 210,00",Mercado Pago
+2026-02-18,Tom Penha,Debito Prestacao Hab,"-R$ 239,08",Caixa
+2026-02-20,Alimentação,Compra no débito - MINIMERCADO LARISSA E,"-R$ 16,98",Nubank
+2026-02-21,Alimentação,Bar do Chico,"-R$ 100,00",
+2026-02-21,Alimentação,Compra no débito - FN FOODS,"-R$ 25,78",Nubank
+2026-02-23,Cartão de Crédito,FATURA PAGA ITI ITAU PLA,"-R$ 30,00",Itaú
+2026-02-23,Cartão de Crédito,FATURA PAGA ITAU PLATINU,"-R$ 289,87",Itaú
+2026-02-23,Cartão de Crédito,Pagamento de fatura,"-R$ 437,20",Nubank
+2026-02-23,Contas,Pagamento com QR Pix ELETROPAULO METROPOLITANA ELETRICIDADE DE SAO PAULO S A,"-R$ 175,13",Mercado Pago
+2026-02-23,Cartão de Crédito,PAGAMENTO DE FATURA PICPAY CARD,"-R$ 617,78",PicPay
+2026-02-23,Receita,PIX TRANSF ANDERSO23/02,"R$ 319,87",Itaú
+2026-02-25,Receita,COR RENDIMENTO XPML11,"R$ 4,60",Itaú
+2026-02-25,Receita,COR RENDIMENTO BTLG11,"R$ 5,60",Itaú
+2026-02-25,Receita,Transferência de saldo NuInvest,"R$ 1,60",Nubank
+2026-02-25,Receita,Transferência de saldo NuInvest,"R$ 0,92",Nubank
+2026-02-25,Alimentação,Compra no débito - HIROTA OFFICE CEIC ITA,"-R$ 5,28",Nubank
+2026-02-26,Alimentação,Compra no débito - HIROTA OFFICE CEIC ITA,"-R$ 8,98",Nubank
+2026-02-27,Receita,FOLHA DE PARTICIPACAO,"R$ 17.238,57",Itaú
+2026-02-27,Receita,FOLHA PAGAMENTO MENSAL,"R$ 7.543,13",Itaú
+2026-02-28,Compras,Transferência enviada pelo Pix - GRUPO CASAS BAHIA S.A. - 33.041.260/0652-90 - BCO DO BRASIL S.A. (0001) Agência: 3400 Conta: 1005289-5,"-R$ 2.399,00",Nubank
+2026-02-28,Gastos Extras,Compra no débito - ALFA PARKIG ESTACIONAM,"-R$ 22,00",Nubank
+2026-03-02,Receita,COR JSCP ITUB4,"R$ 0,15",Itaú
+2026-03-02,Receita,Crédito em conta,"R$ 0,05",Nubank
+2026-03-02,Tom Penha,Pag Boleto IBC,"-R$ 1.300,00",Caixa
+2026-03-03,Tom Penha,PAG BOLETO GARANTE SAO PAULO COBR GAR LT,"-R$ 513,02",Itaú
+2026-03-03,Tarifas Bancárias,Encargos Limite de Cred,"-R$ 1,78",Bradesco
+2026-03-03,Tarifas Bancárias,Iof S/ Utilizacao Limite,"-R$ 0,36",Bradesco
+2026-03-04,Alimentação,Compra no débito - HIROTA OFFICE CEIC ITA,"-R$ 12,76",Nubank
+2026-03-05,Alimentação,Compra no débito - HIROTA OFFICE CEIC ITA,"-R$ 21,26",Nubank
+2026-03-06,Receita,COR JSCP ITUB4,"R$ 3,14",Itaú
+2026-03-07,Gastos Extras,Compra no débito - LimaESilvaGas,"-R$ 16,00",Nubank
+2026-03-08,Gastos Extras,Compra no débito - POSTO DE SERVICOS SANT,"-R$ 4,99",Nubank
+2026-03-08,Gastos Extras,Transferência enviada pelo Pix - ONC SOLUCOES EM TECNOLOGIA DA INFORMACAO LTDA - 50.656.367/0001-36 - IUGU IP S.A. (0401) Agência: 1 Conta: 324981-1,"-R$ 55,16",Nubank
+2026-03-09,Contas (Casa Erm.),SANEAMENTO BASICO DO ESTADO DE SAO PAULO SABESP,"-R$ 162,48",Mercado Pago
+2026-03-09,Contas (Casa Erm.),Pagamento com QR Pix ELETROPAULO METROPOLITANA ELETRICIDADE DE SAO PAULO S A,"-R$ 282,92",Mercado Pago
+2026-03-09,Tarifas Bancárias,Seg Mais Prot,"-R$ 2,86",Bradesco
+2026-03-10,Receita,COR FRACAO ACOES,"R$ 14,43",Itaú
+2026-03-10,Receita,SISPAG FUND SAUDE ITAU,"R$ 565,30",Itaú
+2026-03-10,Investimentos,Capitalizacao,"-R$ 113,79",Bradesco
+2026-03-11,Alimentação,Compra no débito - HIROTA OFFICE CEIC ITA,"-R$ 6,77",Nubank
+2026-03-11,Alimentação,Compra no débito - HIROTA OFFICE CEIC ITA,"-R$ 4,28",Nubank
+2026-03-12,Cartão de Crédito,FATURA PAGA ITAU UNICLAS,"-R$ 2.015,76",Itaú
+2026-03-12,Receita,COR RENDIMENTO KNCR11,"R$ 4,00",Itaú
+2026-03-12,Receita,Crédito em conta,"R$ 1,00",Nubank
+2026-03-12,Contas,Pagamento com QR Pix TIM S A,"-R$ 156,95",Mercado Pago
+2026-03-13,Receita,COR RENDIMENTO TRXF11,"R$ 3,72",Itaú
+2026-03-15,Alimentação,Compra no débito - MINIMERCADO LARISSA E,"-R$ 11,99",Nubank
+2026-03-16,Gastos Extras,PIX TRANSF ROSEMEI15/03,"-R$ 100,00",Itaú
+2026-03-16,Compras,PIX TRANSF WALLACE14/03,"-R$ 38.000,00",Itaú
+2026-03-16,Gastos Extras,PIX QRS BRUNO RICAR14/03,"-R$ 550,00",Itaú
+2026-03-16,Gastos Extras,Pix enviado Car System Alarmes Ltda,"-R$ 948,00",Mercado Pago
+2026-03-16,Tom Penha,Debito Prestacao Hab,"-R$ 198,83",Caixa
+2026-03-17,Cartão de Crédito,PAG BOLETO BANCO BRADESCARD S A,"-R$ 127,80",Itaú
+2026-03-17,Contas (Casa Erm.),PIX QRS TELEFONICA 17/03,"-R$ 128,01",Itaú
+2026-03-17,Contas,PIX QRS CLARO17/03,"-R$ 202,67",Itaú
+2026-03-17,Contas (Casa Erm.),PIX QRS TELEFONICA 17/03,"-R$ 210,00",Itaú
+2026-03-17,Cartão de Crédito,Pagamento Cartão de crédito,"-R$ 105,77",Mercado Pago
+2026-03-17,Gastos Extras,Pix enviado Fabio Willian Cruz,"-R$ 1.200,00",Mercado Pago
+2026-03-18,Compras,Pagamento com QR Pix MAGALUPAY INSTITUICAO DE PAGAMENTO S.A.,"-R$ 118,78",Mercado Pago
+2026-03-19,Cartão de Crédito,FATURA PAGA ITI ITAU PLA,"-R$ 30,00",Itaú
+2026-03-19,Cartão de Crédito,Pagamento de fatura,"-R$ 432,87",Nubank
+2026-03-20,Cartão de Crédito,FATURA PAGA ITAU PLATINU,"-R$ 278,11",Itaú
+2026-03-20,Gastos Extras,PIX QRS DIRETORIA G20/03,"-R$ 469,91",Itaú
+2026-03-20,Cartão de Crédito,PAG BOLETO PORTOSEG SA,"-R$ 111,97",Itaú
+2026-03-20,Cartão de Crédito,PAGAMENTO DE FATURA PICPAY CARD,"-R$ 373,39",PicPay
+2026-03-21,Gastos Extras,Transferência enviada pelo Pix - Telrin Mota dos santos - •••.591.328-•• - PAGSEGURO INTERNET IP S.A. (0290) Agência: 1 Conta: 14103284-7,"-R$ 60,00",Nubank
+2026-03-23,Gastos Extras,Compra no débito - LimaESilvaGas,"-R$ 16,00",Nubank
+2026-03-25,Receita,COR RENDIMENTO XPML11,"R$ 4,60",Itaú
+2026-03-25,Receita,COR RENDIMENTO BTLG11,"R$ 5,60",Itaú
+2026-03-25,Receita,Crédito em conta,"R$ 2,52",Nubank
+2026-03-27,Contas,PIX QRS ENEL DISTRI27/03,"-R$ 171,46",Itaú
+2026-03-27,Receita,FOLHA PAGAMENTO MENSAL,"R$ 7.429,24",Itaú
+2026-03-27,Tom Penha,Pag Boleto IBC,"-R$ 1.500,00",Caixa
+2026-03-28,Alimentação,Compra no débito - MINIMERCADO LARISSA E,"-R$ 11,99",Nubank
+2026-03-31,Gastos Extras,Transferência enviada pelo Pix - Rosemeire Aparecida da Silva Santos - •••.550.408-•• - BANCO INTER (0077) Agência: 1 Conta: 46293169-2,"-R$ 50,00",Nubank
+2026-04-01,Receita,COR JSCP ITUB4,"R$ 0,15",Itaú
+2026-04-01,Receita,Crédito em conta,"R$ 0,05",Nubank
+2026-04-02,Tarifas Bancárias,Encargos Limite de Cred,"-R$ 0,56",Bradesco
+2026-04-02,Tarifas Bancárias,Iof S/ Utilizacao Limite,"-R$ 0,45",Bradesco
+2026-04-06,Tom Penha,PAG BOLETO GARANTE SAO PAULO COBR GAR LT,"-R$ 506,20",Itaú
+2026-04-06,Contas (Casa Erm.),PAG BOLETO ENEL DISTRIBUICAO SAO PAULO,"-R$ 322,83",Itaú
+2026-04-07,Gastos Extras,Transferência enviada pelo Pix - Rosemeire Aparecida da Silva Santos - •••.550.408-•• - BANCO INTER (0077) Agência: 1 Conta: 46293169-2,"-R$ 500,00",Nubank
+2026-04-07,Tarifas Bancárias,Seg Mais Prot,"-R$ 2,86",Bradesco
+2026-04-09,Alimentação,Compra no débito - MINIMERCADO LARISSA E,"-R$ 11,99",Nubank
+2026-04-10,Investimentos,Capitalizacao,"-R$ 113,79",Bradesco
+2026-04-11,Receita,Dinheiro Contas Mãe,"R$ 720,00",
+2026-04-14,Receita,COR RENDIMENTO KNCR11,"R$ 4,60",Itaú
+2026-04-14,Receita,Crédito em conta,"R$ 1,15",Nubank
+2026-04-15,Receita,COR RENDIMENTO TRXF11,"R$ 3,72",Itaú
+2026-04-15,Cartão de Crédito,FATURA PAGA ITAU UNICLAS,"-R$ 1.345,14",Itaú
+2026-04-15,Contas,PIX QRS TIM S A15/04,"-R$ 156,95",Itaú
+2026-04-15,Contas (Casa Erm.),PIX QRS SABESP15/04,"-R$ 173,38",Itaú
+2026-04-16,Cartão de Crédito,Pagamento Cartão de crédito,"-R$ 270,37",Mercado Pago
+2026-04-16,Tom Penha,Debito Prestacao Hab,"-R$ 198,55",Caixa
+2026-04-20,Gastos Extras,PIX TRANSF MARIA J19/04,"-R$ 160,00",Itaú
+2026-04-20,Cartão de Crédito,FATURA PAGA ITI ITAU PLA,"-R$ 30,00",Itaú
+2026-04-20,Cartão de Crédito,FATURA PAGA ITAU PLATINU,"-R$ 266,12",Itaú
+2026-04-20,Cartão de Crédito,PAG BOLETO PORTOSEG SA C FINANC E INVEST,"-R$ 111,95",Itaú
+2026-04-20,Contas (Casa Erm.),PIX QRS TELEFONICA 20/04,"-R$ 128,01",Itaú
+2026-04-20,Contas (Casa Erm.),PIX QRS TELEFONICA 20/04,"-R$ 210,00",Itaú
+2026-04-20,Contas,PIX QRS CLARO20/04,"-R$ 202,67",Itaú
+2026-04-20,Contas,PIX QRS ENEL DISTRI20/04,"-R$ 212,03",Itaú
+2026-04-20,Cartão de Crédito,Pagamento de fatura,"-R$ 533,52",Nubank
+2026-04-20,Cartão de Crédito,PAGAMENTO DE FATURA PICPAY CARD,"-R$ 330,10",PicPay
+2026-04-22,Gastos Extras,Compra no débito - LimaESilvaGas,"-R$ 16,00",Nubank
+2026-04-24,Receita,COR RENDIMENTO BTLG11,"R$ 5,67",Itaú
+2026-04-24,Receita,COR RENDIMENTO XPML11,"R$ 4,60",Itaú
+2026-04-24,Receita,Crédito em conta,"R$ 2,54",Nubank
+2026-04-27,Receita,FOLHA PAGAMENTO MENSAL,"R$ 7.653,86",Itaú
+2026-04-29,Tom Penha,Pag Boleto IBC,"-R$ 1.250,00",Caixa
+2026-05-04,Receita,COR JSCP ITUB4,"R$ 0,15",Itaú
+2026-05-04,Receita,Crédito em conta,"R$ 0,05",Nubank
+2026-05-05,Tarifas Bancárias,Encargos Limite de Cred,"-R$ 1,25",Bradesco
+2026-05-05,Tarifas Bancárias,Iof S/ Utilizacao Limite,"-R$ 0,41",Bradesco
+2026-05-06,Alimentação,Compra no débito - HIROTA OFFICE CEIC ITA,"-R$ 2,98",Nubank
+2026-05-07,Tarifas Bancárias,Seg Mais Prot,"-R$ 2,86",Bradesco
+2026-05-09,Receita,Dinheiro Contas Mãe,"R$ 750,00",
+2026-05-11,Tom Penha,PAG BOLETO GARANTE SAO PAULO COBR GAR LT,"-R$ 509,25",Itaú
+2026-05-11,Contas (Casa Erm.),PAG BOLETO ENEL DISTRIB,"-R$ 368,25",Itaú
+2026-05-11,Contas,PIX QRS TIM S A11/05,"-R$ 119,97",Itaú
+2026-05-11,Contas (Casa Erm.),INT /SABESP 2865823850,"-R$ 162,48",Itaú
+2026-05-11,Cartão de Crédito,FATURA PAGA ITAU UNICLAS,"-R$ 2.909,47",Itaú
+2026-05-11,Investimentos,Capitalizacao,"-R$ 117,69",Bradesco
+2026-05-13,Alimentação,Compra no débito - HIROTA OFFICE CEIC ITA,"-R$ 6,28",Nubank
+2026-05-14,Receita,COR RENDIMENTO KNCR11,"R$ 4,40",Itaú
+2026-05-14,Receita,Crédito em conta,"R$ 1,10",Nubank
+2026-05-15,Receita,COR RENDIMENTO TRXF11,"R$ 3,72",Itaú
+2026-05-15,Contas,PIX QRS CLARO15/05,"-R$ 202,67",Itaú
+2026-05-15,Contas (Casa Erm.),PIX QRS TELEFONICA 15/05,"-R$ 128,01",Itaú
+2026-05-15,Contas (Casa Erm.),PIX QRS TELEFONICA 15/05,"-R$ 210,00",Itaú
+2026-05-15,Cartão de Crédito,PAG BOLETO BANCO BRADES,"-R$ 38,40",Itaú
+2026-05-16,Cartão de Crédito,Pagamento Cartão de crédito,"-R$ 371,55",Mercado Pago
+2026-05-18,Tom Penha,Debito Prestacao Hab,"-R$ 198,00",Caixa
+2026-05-20,Gastos Extras,PIX TRANSF MARIA J20/05,"-R$ 180,00",Itaú
+2026-05-20,Receita,Crédito em conta,"R$ 1,09",Nubank
+2026-05-20,Alimentação,Compra no débito - HIROTA OFFICE CEIC ITA,"-R$ 4,28",Nubank
+2026-05-22,Cartão de Crédito,FATURA PAGA ITAU PLATINU,"-R$ 490,31",Itaú
+2026-05-22,Cartão de Crédito,FATURA PAGA ITI ITAU PLA,"-R$ 30,00",Itaú
+2026-05-22,Cartão de Crédito,PAG BOLETO PORTOSEG SA,"-R$ 111,95",Itaú
+2026-05-22,Cartão de Crédito,Pagamento de fatura,"-R$ 279,61",Nubank
+2026-05-22,Cartão de Crédito,PAGAMENTO DE FATURA PICPAY CARD,"-R$ 285,08",PicPay
+2026-05-25,Receita,COR RENDIMENTO BTLG11,"R$ 5,67",Itaú
+2026-05-25,Receita,COR RENDIMENTO XPML11,"R$ 4,60",Itaú
+2026-05-25,Receita,Crédito em conta,"R$ 2,54",Nubank
+2026-05-26,Gastos Extras,PIX TRANSF JULIET 26/05,"-R$ 18,44",Itaú
+2026-05-26,Compras,Pix enviado RICAFER COMERCIAL E SERVICOS,"-R$ 255,18",Mercado Pago
+2026-05-27,Receita,FOLHA PAGTO 13. SALARIO,"R$ 5.517,50",Itaú
+2026-05-27,Receita,FOLHA PAGAMENTO MENSAL,"R$ 7.461,89",Itaú
+2026-05-27,Contas,PIX QRS ENEL DISTRI27/05,"-R$ 202,21",Itaú
+2026-05-28,Alimentação,Compra no débito - RC CAFE GOURMET LTDA,"-R$ 14,00",Nubank
+2026-05-29,Receita,PIX TRANSF SECR. D29/05,"R$ 42,08",Itaú
+2026-06-01,Receita,COR JSCP ITUB4,"R$ 0,15",Itaú
+2026-06-01,Receita,Crédito em conta,"R$ 0,05",Nubank
+2026-06-01,Gastos Extras,Pagamento com QR Pix SAO PAULO TRANSPORTE S.A.,"-R$ 150,08",Mercado Pago
+2026-06-01,Tom Penha,Pag Boleto IBC,"-R$ 1.550,00",Caixa
+2026-06-06,Receita,Dinheiro Contas Mãe,"R$ 740,00",
+2026-06-06,Alimentação,Compra no débito - MINIMERCADO LARISSA E,"-R$ 11,99",Nubank
+2026-06-08,Tom Penha,PAG BOLETO GARANTE SAO PAULO COBR GAR LT,"-R$ 527,90",Itaú
+2026-06-08,Contas (Casa Erm.),PIX QRS SABESP08/06,"-R$ 162,48",Itaú
+2026-06-08,Contas (Casa Erm.),PIX QRS ENEL DISTRI08/06,"-R$ 361,38",Itaú
+2026-06-08,Contas,PIX QRS TIM S A08/06,"-R$ 119,97",Itaú
+2026-06-08,Tarifas Bancárias,Seg Mais Prot,"-R$ 2,86",Bradesco
+2026-06-10,Investimentos,Capitalizacao,"-R$ 117,69",Bradesco
+2026-06-12,Receita,COR RENDIMENTO KNCR11,"R$ 4,40",Itaú
+2026-06-12,Gastos Extras,PIX TRANSF CILZIA 12/06,"-R$ 1,00",Itaú
+2026-06-12,Cartão de Crédito,FATURA PAGA ITAU UNICLAS,"-R$ 1.467,92",Itaú
+2026-06-12,Receita,Crédito em conta,"R$ 1,10",Nubank
+2026-06-12,Alimentação,Compra no débito - MINIMERCADO LARISSA E,"-R$ 11,99",Nubank
+2026-06-15,Contas (Casa Erm.),PIX QRS TELEFONICA 15/06,"-R$ 210,00",Itaú
+2026-06-15,Contas (Casa Erm.),PIX QRS TELEFONICA 15/06,"-R$ 136,50",Itaú
+2026-06-15,Contas,PIX QRS CLARO15/06,"-R$ 202,67",Itaú
+2026-06-15,Receita,COR RENDIMENTO TRXF11,"R$ 3,72",Itaú
+2026-06-16,Cartão de Crédito,Pagamento Cartão de crédito,"-R$ 619,27",Mercado Pago
+2026-06-16,Tom Penha,Debito Prestacao Hab,"-R$ 197,69",Caixa
+2026-06-17,Receita,COR JURS CDB BANCO BMG,"R$ 434,69",Itaú
+2026-06-17,Receita,COR RESG CDB BANCO BMG,"R$ 1.000,00",Itaú
+2026-06-20,Cartão de Crédito,Pagamento de fatura,"-R$ 332,89",Nubank
+2026-06-20,Alimentação,Compra no débito - MINIMERCADO LARISSA E,"-R$ 19,99",Nubank
+2026-06-20,Cartão de Crédito,PAGAMENTO DE FATURA PICPAY CARD,"-R$ 488,95",PicPay
+2026-06-21,Alimentação,Compra no débito - MINIMERCADO LARISSA E,"-R$ 11,99",Nubank
+2026-06-22,Gastos Extras,PIX TRANSF MARIA J20/06,"-R$ 180,00",Itaú
+2026-06-22,Cartão de Crédito,FATURA PAGA ITAU PLATINU,"-R$ 253,55",Itaú
+2026-06-22,Cartão de Crédito,FATURA PAGA ITI ITAU PLA,"-R$ 30,00",Itaú
+2026-06-22,Cartão de Crédito,PAG BOLETO PORTOSEG SA C FINANC E INVEST,"-R$ 242,75",Itaú
+2026-06-22,Cartão de Crédito,FATURA PAGA ITAU PLATINU,"-R$ 253,55",Itaú
+2026-06-22,Receita,Crédito em conta,"R$ 1,11",Nubank
+2026-06-24,Receita,CREDITO CARTAO ITAU,"R$ 253,55",Itaú
+2026-06-24,Alimentação,Compra no débito - MINIMERCADO LARISSA E,"-R$ 20,98",Nubank
+2026-06-25,Receita,COR RENDIMENTO XPML11,"R$ 4,60",Itaú
+2026-06-25,Receita,COR RENDIMENTO BTLG11,"R$ 5,67",Itaú
+2026-06-25,Receita,Crédito em conta,"R$ 2,54",Nubank
+2026-06-26,Receita,FOLHA PAGAMENTO MENSAL,"R$ 7.824,97",Itaú
+2026-06-26,Contas,PIX QRS ENEL DISTRI26/06,"-R$ 169,32",Itaú
+2026-06-26,Tom Penha,PAG BOLETO GCI CAIXA - HABITACAO,"-R$ 1.502,80",Itaú
